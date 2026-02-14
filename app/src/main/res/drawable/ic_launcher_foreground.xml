@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simple capture/note icon: a pencil/edit symbol -->
+    <path
+        android:fillColor="#53B7D3"
+        android:pathData="M38,70l0,-6 26,-26 6,6 -26,26zM68,40l-6,-6 3,-3c1.7,-1.7 4.3,-1.7 6,0l0,0c1.7,1.7 1.7,4.3 0,6zM36,72l2,-8 6,6z" />
+</vector>
