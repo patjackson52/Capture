@@ -16,6 +16,7 @@ class CaptureRepository(private val context: Context) {
     private val prefs = PreferencesManager(context)
 
     companion object {
+        private const val TAG = "Save"
         private val FILE_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss")
         private val YAML_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
     }
@@ -26,14 +27,29 @@ class CaptureRepository(private val context: Context) {
      */
     suspend fun save(capture: CaptureData): Result<String> = withContext(Dispatchers.IO) {
         try {
+            AppLogger.i(TAG, "Starting save — source=${capture.source.label}, " +
+                    "textLen=${capture.text.length}, attachments=${capture.attachments.size}, " +
+                    "tags=${capture.tags}")
+
             val locationUri = prefs.saveLocationUri.first()
-                ?: return@withContext Result.failure(Exception("No save location set. Tap the folder path to choose one."))
+            if (locationUri == null) {
+                AppLogger.e(TAG, "No save location configured")
+                return@withContext Result.failure(Exception("No save location set. Tap the folder path to choose one."))
+            }
+            AppLogger.d(TAG, "Save location URI: $locationUri")
 
             val treeUri = Uri.parse(locationUri)
             val rootDir = DocumentFile.fromTreeUri(context, treeUri)
-                ?: return@withContext Result.failure(Exception("Cannot access save folder. It may have been moved or deleted."))
+            if (rootDir == null) {
+                AppLogger.e(TAG, "DocumentFile.fromTreeUri returned null for: $treeUri")
+                return@withContext Result.failure(Exception("Cannot access save folder. It may have been moved or deleted."))
+            }
+
+            AppLogger.d(TAG, "Root dir: name=${rootDir.name}, canWrite=${rootDir.canWrite()}, " +
+                    "exists=${rootDir.exists()}, uri=${rootDir.uri}")
 
             if (!rootDir.canWrite()) {
+                AppLogger.e(TAG, "Cannot write to save folder: ${rootDir.uri}")
                 return@withContext Result.failure(Exception("Cannot write to save folder. Please choose a new location."))
             }
 
@@ -43,17 +59,35 @@ class CaptureRepository(private val context: Context) {
             val savedFiles = mutableListOf<String>()
 
             // Save attachments first
-            for (attachment in capture.attachments) {
+            for ((index, attachment) in capture.attachments.withIndex()) {
                 val ext = extensionForMimeType(attachment.mimeType)
                 val fileName = "${timestamp}_${attachment.displayName ?: "file"}.$ext"
                 val mimeType = attachment.mimeType ?: "application/octet-stream"
 
-                val newFile = rootDir.createFile(mimeType, fileName)
-                    ?: continue
+                AppLogger.d(TAG, "Saving attachment ${index + 1}/${capture.attachments.size}: " +
+                        "$fileName (mime=$mimeType, sourceUri=${attachment.uri})")
 
-                context.contentResolver.openInputStream(attachment.uri)?.use { input ->
-                    context.contentResolver.openOutputStream(newFile.uri)?.use { output ->
-                        input.copyTo(output)
+                val newFile = rootDir.createFile(mimeType, fileName)
+                if (newFile == null) {
+                    AppLogger.e(TAG, "createFile returned null for: $fileName (mime=$mimeType)")
+                    continue
+                }
+
+                val inputStream = context.contentResolver.openInputStream(attachment.uri)
+                if (inputStream == null) {
+                    AppLogger.e(TAG, "openInputStream returned null for: ${attachment.uri}")
+                    continue
+                }
+
+                inputStream.use { input ->
+                    val outputStream = context.contentResolver.openOutputStream(newFile.uri)
+                    if (outputStream == null) {
+                        AppLogger.e(TAG, "openOutputStream returned null for: ${newFile.uri}")
+                        return@use
+                    }
+                    outputStream.use { output ->
+                        val bytes = input.copyTo(output)
+                        AppLogger.d(TAG, "Wrote $bytes bytes → ${newFile.uri}")
                     }
                 }
                 savedFiles.add(fileName)
@@ -62,13 +96,24 @@ class CaptureRepository(private val context: Context) {
             // Save text note (always, even if empty — serves as metadata sidecar for attachments)
             if (capture.text.isNotBlank() || capture.attachments.isNotEmpty()) {
                 val noteFileName = "${timestamp}_note.md"
+                AppLogger.d(TAG, "Creating note file: $noteFileName")
+
                 val noteFile = rootDir.createFile("text/markdown", noteFileName)
-                    ?: return@withContext Result.failure(Exception("Failed to create note file."))
+                if (noteFile == null) {
+                    AppLogger.e(TAG, "createFile returned null for note: $noteFileName")
+                    return@withContext Result.failure(Exception("Failed to create note file."))
+                }
 
                 val content = buildNoteContent(capture, yamlTimestamp, savedFiles)
-                context.contentResolver.openOutputStream(noteFile.uri)?.use { output ->
+                val outputStream = context.contentResolver.openOutputStream(noteFile.uri)
+                if (outputStream == null) {
+                    AppLogger.e(TAG, "openOutputStream returned null for note: ${noteFile.uri}")
+                    return@withContext Result.failure(Exception("Failed to write note file."))
+                }
+                outputStream.use { output ->
                     output.write(content.toByteArray(Charsets.UTF_8))
                 }
+                AppLogger.d(TAG, "Note written: ${content.length} chars → ${noteFile.uri}")
                 savedFiles.add(noteFileName)
             }
 
@@ -78,8 +123,10 @@ class CaptureRepository(private val context: Context) {
             }
 
             val fileWord = if (savedFiles.size == 1) "file" else "files"
+            AppLogger.i(TAG, "Save complete — ${savedFiles.size} $fileWord: $savedFiles")
             Result.success("Saved ${savedFiles.size} $fileWord")
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Save failed with exception", e)
             Result.failure(Exception("Save failed: ${e.message}"))
         }
     }
