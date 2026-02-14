@@ -8,10 +8,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.capture.app.data.PreferencesManager
 import com.capture.app.model.CaptureSource
 import com.capture.app.ui.CaptureScreen
+import com.capture.app.ui.LogViewerScreen
 import com.capture.app.ui.theme.CaptureTheme
 import kotlinx.coroutines.launch
 
@@ -37,6 +41,8 @@ class ProcessTextActivity : ComponentActivity() {
         }
     }
 
+    private var showLogs by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -45,15 +51,20 @@ class ProcessTextActivity : ComponentActivity() {
 
         setContent {
             CaptureTheme {
-                CaptureScreen(
-                    initialText = selectedText,
-                    source = CaptureSource.ProcessText,
-                    onSaved = {
-                        Toast.makeText(this, "Captured!", Toast.LENGTH_SHORT).show()
-                        finish()
-                    },
-                    onFolderPick = { folderPickerLauncher.launch(null) }
-                )
+                if (showLogs) {
+                    LogViewerScreen(onBack = { showLogs = false })
+                } else {
+                    CaptureScreen(
+                        initialText = selectedText,
+                        source = CaptureSource.ProcessText,
+                        onSaved = {
+                            Toast.makeText(this, "Captured!", Toast.LENGTH_SHORT).show()
+                            finish()
+                        },
+                        onFolderPick = { folderPickerLauncher.launch(null) },
+                        onViewLogs = { showLogs = true }
+                    )
+                }
             }
         }
     }

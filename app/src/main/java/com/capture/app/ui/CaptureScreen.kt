@@ -1,6 +1,7 @@
 package com.capture.app.ui
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -31,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FolderOpen
@@ -68,6 +70,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.capture.app.BuildConfig
+import com.capture.app.data.AppLogger
 import com.capture.app.data.CaptureRepository
 import com.capture.app.data.PreferencesManager
 import com.capture.app.model.Attachment
@@ -82,7 +86,8 @@ fun CaptureScreen(
     initialAttachments: List<Attachment> = emptyList(),
     source: CaptureSource = CaptureSource.Direct,
     onSaved: () -> Unit = {},
-    onFolderPick: () -> Unit = {}
+    onFolderPick: () -> Unit = {},
+    onViewLogs: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -137,6 +142,18 @@ fun CaptureScreen(
                     )
                 },
                 actions = {
+                    // Debug-only: view logs button
+                    if (BuildConfig.DEBUG && onViewLogs != null) {
+                        IconButton(onClick = onViewLogs) {
+                            Icon(
+                                Icons.Default.BugReport,
+                                contentDescription = "View logs",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
                     // Save button — always visible
                     FilledTonalButton(
                         onClick = {
@@ -160,7 +177,10 @@ fun CaptureScreen(
                                         onSaved()
                                     },
                                     onFailure = { err ->
-                                        snackbarHostState.showSnackbar(err.message ?: "Save failed")
+                                        val errorMsg = err.message ?: "Save failed"
+                                        Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                        AppLogger.e("UI", "Save error shown to user: $errorMsg")
+                                        snackbarHostState.showSnackbar(errorMsg)
                                         isSaving = false
                                     }
                                 )
