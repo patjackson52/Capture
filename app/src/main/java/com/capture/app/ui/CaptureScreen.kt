@@ -153,6 +153,10 @@ fun CaptureScreen(
                                 result.fold(
                                     onSuccess = { msg ->
                                         snackbarHostState.showSnackbar(msg)
+                                        text = ""
+                                        tags.clear()
+                                        attachments.clear()
+                                        isSaving = false
                                         onSaved()
                                     },
                                     onFailure = { err ->
@@ -359,14 +363,14 @@ fun CaptureScreen(
                 Icon(
                     Icons.Default.FolderOpen,
                     contentDescription = "Save location",
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = saveLocationDisplay,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

@@ -44,8 +44,6 @@ class MainActivity : ComponentActivity() {
                     source = CaptureSource.Direct,
                     onSaved = {
                         Toast.makeText(this, "Captured!", Toast.LENGTH_SHORT).show()
-                        // Reset for next capture — just recreate
-                        recreate()
                     },
                     onFolderPick = { folderPickerLauncher.launch(null) }
                 )

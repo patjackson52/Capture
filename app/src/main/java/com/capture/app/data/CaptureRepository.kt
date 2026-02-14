@@ -110,6 +110,14 @@ class CaptureRepository(private val context: Context) {
         // Body
         if (capture.text.isNotBlank()) {
             appendLine(capture.text)
+            appendLine()
+        }
+
+        // Embed attachments with Obsidian-style wikilinks
+        for (name in attachmentFileNames) {
+            if (!name.endsWith("_note.md")) {
+                appendLine("![[${name}]]")
+            }
         }
     }
 
