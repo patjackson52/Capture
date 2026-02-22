@@ -21,9 +21,10 @@ Use this checklist before enabling signed Play Store release builds.
 
 ## Build/release readiness
 
-- [ ] `VERSION` file updated for release candidate
-- [ ] Release workflow manually tested from `workflow_dispatch`
-- [ ] Signed build verification step added (APK/AAB signature validation)
+- [ ] `VERSION` file matches `versionName` in `app/build.gradle.kts`
+- [ ] `versionCode` incremented for each Play upload candidate
+- [ ] `Android Play Internal CD` workflow tested with `upload_enabled=false`
+- [ ] `Android Play Internal CD` workflow tested with `upload_enabled=true`
 - [ ] Artifact retention window reviewed
 - [ ] Release notes process defined
 

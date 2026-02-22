@@ -1,37 +1,30 @@
 # Required checks for branch protection (`main`)
 
-This repository uses GitHub Actions for CI.
+Configure branch protection to enforce Android CD readiness.
 
-## Required status checks to enforce
+## Required status checks
 
-Use these exact check names when configuring branch protection for `main`:
-
-- `build-and-test` (from workflow **Android CI**)
-
-Depending on GitHub UI/API context formatting, this may appear as:
+Use these check contexts (exact names from PR Checks UI):
 
 - `Android CI / build-and-test`
 
-## Branch protection settings (recommended)
+Recommended additional gate for release-focused PRs:
 
-In addition to required checks, enable:
+- `Android Play Internal CD / internal-release` (from manual dry-run run linked in PR)
 
-- Require a pull request before merging
-- Require approvals (at least 1)
-- Dismiss stale approvals on new commits
+> Note: the Play CD workflow is tag/manual-triggered, so it may not appear automatically on every PR commit. For release PRs, attach a successful dry-run workflow URL as evidence.
+
+## Required branch protection settings
+
+- Require pull request before merging
+- Require at least 1 approval
+- Dismiss stale approvals when new commits are pushed
 - Require status checks to pass before merging
-- Require branches to be up to date before merging
-- Include administrators (recommended for strict policy)
+- Require branches to be up to date
+- Include administrators (recommended)
 
-## GitHub click-path
+## Optional but recommended
 
-1. Repo **Settings**
-2. **Branches**
-3. Under **Branch protection rules**, edit/add rule for `main`
-4. Enable **Require status checks to pass before merging**
-5. Add required check: `build-and-test`
-6. Save changes
-
-## API/CLI note
-
-If using API/CLI, ensure the rule references the same status context that appears in checks for a PR commit. Use the exact string shown in the PR Checks tab if `build-and-test` alone does not resolve.
+- Require conversation resolution before merge
+- Restrict who can push to `main`
+- Require signed commits (if org policy requires)
