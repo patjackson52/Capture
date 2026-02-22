@@ -9,9 +9,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   validate-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      artifact_name: ${{ steps.meta.outputs.artifact_name }}
 
     steps:
       - name: Checkout
@@ -19,6 +28,7 @@ jobs:
 
       - name: Resolve version from VERSION file
         id: version
+        shell: bash
         run: |
           set -euo pipefail
           VERSION_FILE="$(tr -d '[:space:]' < VERSION)"
@@ -37,6 +47,15 @@ jobs:
 
           echo "version=${VERSION_FILE}" >> "$GITHUB_OUTPUT"
           echo "Resolved version from VERSION: ${VERSION_FILE}"
+
+      - name: Set artifact metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTIFACT_NAME="capture-android-release-unsigned-${{ steps.version.outputs.version }}"
+          echo "artifact_name=${ARTIFACT_NAME}" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=${ARTIFACT_NAME}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -57,26 +76,47 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Verify release artifacts exist
+        shell: bash
         run: |
           set -euo pipefail
           ls -lah app/build/outputs/apk/release || true
           test -n "$(find app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) | head -n 1)"
 
       - name: Write release metadata
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p build
           {
             echo "version=${{ steps.version.outputs.version }}"
+            echo "artifact_name=${{ steps.meta.outputs.artifact_name }}"
             echo "ref=${GITHUB_REF_NAME}"
             echo "sha=${GITHUB_SHA}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
           } > build/release-metadata.txt
+
+          cat > build/release-metadata.json <<EOF
+          {
+            "version": "${{ steps.version.outputs.version }}",
+            "artifact_name": "${{ steps.meta.outputs.artifact_name }}",
+            "ref": "${GITHUB_REF_NAME}",
+            "sha": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}"
+          }
+          EOF
+
           cat build/release-metadata.txt
 
       - name: Upload release artifacts (unsigned)
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-unsigned-${{ steps.version.outputs.version }}
+          name: ${{ steps.meta.outputs.artifact_name }}
           path: |
             app/build/outputs/**/release/*
             build/release-metadata.txt
+            build/release-metadata.json
           if-no-files-found: warn
+          retention-days: 30
+          overwrite: true
