@@ -16,7 +16,7 @@ Use this checklist before enabling recurring Internal-track CD.
 - [ ] QA sign-off complete for critical paths
 - [ ] Product/release owner approves scope + timing
 - [ ] Security/privacy review complete for sensitive changes
-
+- [ ] `docs/release-verification-evidence-template.md` completed and attached to PR/issue
 ## Staged delivery plan
 
 - [ ] Internal first (status `draft` for initial validation)

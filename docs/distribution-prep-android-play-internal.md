@@ -76,6 +76,9 @@ The workflow exits early when:
 - `versionName != VERSION`
 - invalid `versionCode`
 - tag/version mismatch
+- invalid `release_status` (must be `draft|inProgress|completed`)
+- manual upload attempted from non-`main` ref
+- tag release `versionCode` is not strictly greater than previous tagged release
 - upload requested while signing or Play secrets are missing
 - AAB output missing
 
