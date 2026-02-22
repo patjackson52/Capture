@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [ main, master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -35,16 +43,19 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-unit-test-reports
+          name: capture-android-unit-test-reports
           path: |
             app/build/reports/tests/testDebugUnitTest
             app/build/test-results/testDebugUnitTest
           if-no-files-found: warn
           retention-days: 14
+          overwrite: true
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: capture-android-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
           retention-days: 14
+          overwrite: true
