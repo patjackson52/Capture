@@ -1,0 +1,62 @@
+name: Capture Release Baseline
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version source
+        id: version
+        run: |
+          VERSION_FILE=$(tr -d '\n' < VERSION)
+          echo "version=${VERSION_FILE}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: ${VERSION_FILE}"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build unsigned release (baseline)
+        run: ./gradlew assembleRelease
+
+      - name: Placeholder signing check
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for s in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!s}" ]; then
+              echo "::warning::Missing secret: $s"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Signing secrets are not fully configured yet (expected for baseline)."
+          fi
+
+      - name: Upload release artifacts (unsigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-unsigned-${{ steps.version.outputs.version }}
+          path: app/build/outputs/**/release/*
+          if-no-files-found: warn
