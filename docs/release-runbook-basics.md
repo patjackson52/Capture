@@ -7,6 +7,8 @@ This is the minimum operator runbook for unsigned baseline releases.
 - `VERSION` file contains the intended release version (for example `0.1.0`)
 - For tag-triggered release, git tag must be `v<VERSION>` (for example `v0.1.0`)
 - Android signing material is handled separately (see `docs/signing-prerequisites-android.md`)
+- Play Internal distribution scaffold/runbook is documented in `docs/distribution-prep-android-play-internal.md`
+- Release approval/rollout/rollback controls are in `docs/release-governance-checklist.md`
 
 ## Triggering releases
 
