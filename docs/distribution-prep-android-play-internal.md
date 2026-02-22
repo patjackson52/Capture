@@ -1,53 +1,100 @@
-# Android Play Internal distribution prep (Phase 2 scaffold)
+# Android Play Internal CD setup guide
 
-This document defines the non-secret scaffolding and validation path for Play Internal uploads.
+This guide is the end-to-end setup for shipping Capture to **Google Play Internal** from GitHub Actions.
 
-## Required secrets (fail-fast enforced in workflow)
+Workflow: `.github/workflows/android-play-internal.yml`
 
-- `PLAY_SERVICE_ACCOUNT_JSON` - raw JSON for the Play Console service account with minimal rights
-- `PLAY_PACKAGE_NAME` - application ID/package name (for example `com.example.capture`)
+## 1) Required repository state
 
-> Workflow: `.github/workflows/android-play-internal.yml`
+- `VERSION` file must contain the release version (example: `1.1`)
+- `app/build.gradle.kts` must have:
+  - `versionName` exactly matching `VERSION`
+  - positive integer `versionCode`
+- For tag-triggered releases, tag must be `v<VERSION>` (example: `v1.1`)
 
-## Trigger paths
+## 2) GitHub permissions + protections
 
-- Manual: **Android Play Internal (scaffold)** via `workflow_dispatch`
-- Tag push: `v*` (upload will execute on tag runs)
+Configure branch protection on `main`:
 
-## Validation behavior
+- Require pull request before merge
+- Require approvals (>=1)
+- Require status checks to pass
+- Require branch up to date before merge
+- Include administrators (recommended)
 
-The workflow fails immediately when:
+Required checks are listed in `docs/required-checks.md`.
 
-- `VERSION` is empty
-- tag version and `VERSION` do not match
-- required distribution secrets are missing
-- no release `.aab` is produced
+## 3) Required secrets
 
-## Safe scaffold mode (default)
+### Signing secrets (for signed AAB)
 
-`upload_enabled` defaults to `false` for manual runs.
+- `ANDROID_KEYSTORE_BASE64` - base64 of upload keystore `.jks`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
 
-In scaffold mode, the workflow:
+### Play upload secrets (for Internal track upload)
 
-1. validates configuration/secrets
-2. builds release AAB (`bundleRelease`)
-3. writes run summary guidance
-4. skips actual Play upload
+- `PLAY_SERVICE_ACCOUNT_JSON` - raw service account JSON
+- `PLAY_PACKAGE_NAME` - app id (example: `com.capture.app`)
 
-## Enabling real upload
+Recommended: store these in a protected **Environment** (for example `production-release`) with reviewer approval.
 
-For manual run, set:
+## 4) Service account scope (least privilege)
 
-- `upload_enabled=true`
-- optional `release_status` (`draft`, `inProgress`, `completed`)
+Use a dedicated Play service account with only the permissions needed for Internal upload and release management.
 
-For tag push (`v*`), upload executes automatically after validation/build.
+Minimum practical scope:
+- View app info
+- Upload/edit internal releases
+- No broad financial/admin permissions
 
-## Operator validation checklist
+## 5) Trigger modes
 
-- [ ] Secrets exist in repo/environment scope with least privilege
-- [ ] Service account has Internal track upload permission only as needed
-- [ ] `PLAY_PACKAGE_NAME` matches app package exactly
-- [ ] Dry-run/scaffold run succeeded from `workflow_dispatch`
-- [ ] First upload performed to Internal track as `draft`
-- [ ] QA install + smoke test completed from Play Internal artifact
+### Manual dry run (default)
+
+- GitHub Actions → **Android Play Internal CD**
+- `upload_enabled=false` (default)
+
+This mode still validates versioning and builds AAB artifacts, but skips Play upload.
+
+### Manual upload
+
+- Run workflow with `upload_enabled=true`
+- Optional `release_status` (`draft`, `inProgress`, `completed`)
+
+### Tag upload
+
+- Push `v*` tag (for example `v1.1`)
+- Upload is requested automatically and secrets are required
+
+## 6) Fail-fast behavior
+
+The workflow exits early when:
+
+- `VERSION` missing/empty
+- `versionName != VERSION`
+- invalid `versionCode`
+- tag/version mismatch
+- upload requested while signing or Play secrets are missing
+- AAB output missing
+
+## 7) Artifacts and metadata outputs
+
+Every run uploads:
+
+- `capture-android-play-internal-<VERSION>` artifact containing:
+  - generated `.aab`
+  - `build/release-metadata.txt`
+  - `build/release-metadata.json`
+
+Metadata records commit/ref, run IDs, checksum, and whether secrets were present.
+
+## 8) First-time enablement checklist
+
+- [ ] Dry run succeeds with `upload_enabled=false`
+- [ ] Metadata confirms expected version + checksum
+- [ ] Signed build path validated with signing secrets present
+- [ ] First Internal upload executed with `release_status=draft`
+- [ ] QA installs from Play Internal and signs off
+- [ ] Rollback path rehearsed (see runbook)

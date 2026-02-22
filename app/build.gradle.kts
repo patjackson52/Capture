@@ -16,10 +16,30 @@ android {
         versionName = "1.1"
     }
 
+    val ciStoreFile = providers.gradleProperty("ANDROID_SIGNING_STORE_FILE").orNull
+    val ciStorePassword = providers.gradleProperty("ANDROID_SIGNING_STORE_PASSWORD").orNull
+    val ciKeyAlias = providers.gradleProperty("ANDROID_SIGNING_KEY_ALIAS").orNull
+    val ciKeyPassword = providers.gradleProperty("ANDROID_SIGNING_KEY_PASSWORD").orNull
+    val ciSigningReady = listOf(ciStoreFile, ciStorePassword, ciKeyAlias, ciKeyPassword).all { !it.isNullOrBlank() }
+
+    signingConfigs {
+        if (ciSigningReady) {
+            create("ciRelease") {
+                storeFile = file(ciStoreFile!!)
+                storePassword = ciStorePassword
+                keyAlias = ciKeyAlias
+                keyPassword = ciKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (ciSigningReady) {
+                signingConfig = signingConfigs.getByName("ciRelease")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

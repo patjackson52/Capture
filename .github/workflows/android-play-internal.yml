@@ -1,10 +1,10 @@
-name: Android Play Internal (scaffold)
+name: Android Play Internal CD
 
 on:
   workflow_dispatch:
     inputs:
       upload_enabled:
-        description: "Set true to perform Play Internal upload after validation/build"
+        description: "Set true to upload signed AAB to Play Internal after validation"
         required: false
         default: "false"
       release_status:
@@ -22,79 +22,160 @@ concurrency:
   group: android-play-internal-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  CI: "true"
+  TZ: "UTC"
+  LANG: "C.UTF-8"
+  LC_ALL: "C.UTF-8"
+
 jobs:
-  validate-build-upload:
+  internal-release:
+    name: internal-release
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Resolve version from VERSION file
+      - name: Resolve release intent + validate version consistency
         id: version
         shell: bash
         run: |
           set -euo pipefail
           VERSION_FILE="$(tr -d '[:space:]' < VERSION)"
           if [ -z "$VERSION_FILE" ]; then
-            echo "VERSION file is empty"
+            echo "::error::VERSION file is empty"
+            exit 1
+          fi
+
+          APP_VERSION_NAME="$(grep -E 'versionName\s*=\s*"' app/build.gradle.kts | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')"
+          APP_VERSION_CODE="$(grep -E 'versionCode\s*=\s*[0-9]+' app/build.gradle.kts | head -n1 | sed -E 's/.*=\s*([0-9]+).*/\1/')"
+
+          if [ -z "$APP_VERSION_NAME" ] || [ -z "$APP_VERSION_CODE" ]; then
+            echo "::error::Failed to parse versionName/versionCode from app/build.gradle.kts"
+            exit 1
+          fi
+
+          if [ "$APP_VERSION_NAME" != "$VERSION_FILE" ]; then
+            echo "::error::versionName ($APP_VERSION_NAME) must match VERSION ($VERSION_FILE)"
+            exit 1
+          fi
+
+          if ! [[ "$APP_VERSION_CODE" =~ ^[0-9]+$ ]] || [ "$APP_VERSION_CODE" -le 0 ]; then
+            echo "::error::versionCode must be a positive integer (found: $APP_VERSION_CODE)"
             exit 1
           fi
 
           if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
             TAG_VERSION="${GITHUB_REF_NAME#v}"
             if [ "$TAG_VERSION" != "$VERSION_FILE" ]; then
-              echo "Tag/version mismatch: tag=$TAG_VERSION VERSION=$VERSION_FILE"
+              echo "::error::Tag/version mismatch: tag=$TAG_VERSION VERSION=$VERSION_FILE"
               exit 1
             fi
+            upload_requested=true
+          else
+            upload_requested='${{ inputs.upload_enabled || '"'"'false'"'"' }}'
           fi
 
-          echo "version=${VERSION_FILE}" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION_FILE" >> "$GITHUB_OUTPUT"
+          echo "version_name=$APP_VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$APP_VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "upload_requested=$upload_requested" >> "$GITHUB_OUTPUT"
 
-      - name: Fail fast on missing distribution secrets
+      - name: Check required secrets and decide mode
+        id: secrets
         shell: bash
         env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           PLAY_PACKAGE_NAME: ${{ secrets.PLAY_PACKAGE_NAME }}
         run: |
           set -euo pipefail
-          missing=0
-          for key in PLAY_SERVICE_ACCOUNT_JSON PLAY_PACKAGE_NAME; do
+          signing_ready=true
+          upload_ready=true
+          missing_signing=()
+          missing_upload=()
+
+          for key in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
             if [ -z "${!key:-}" ]; then
-              echo "::error::Missing required secret: $key"
-              missing=1
+              missing_signing+=("$key")
+              signing_ready=false
             fi
           done
 
-          if [ "$missing" -ne 0 ]; then
-            echo "Configure repo/environment secrets before running this workflow."
-            exit 1
+          for key in PLAY_SERVICE_ACCOUNT_JSON PLAY_PACKAGE_NAME; do
+            if [ -z "${!key:-}" ]; then
+              missing_upload+=("$key")
+              upload_ready=false
+            fi
+          done
+
+          echo "signing_ready=$signing_ready" >> "$GITHUB_OUTPUT"
+          echo "upload_ready=$upload_ready" >> "$GITHUB_OUTPUT"
+          printf 'missing_signing=%s\n' "${missing_signing[*]:-none}" >> "$GITHUB_OUTPUT"
+          printf 'missing_upload=%s\n' "${missing_upload[*]:-none}" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ steps.version.outputs.upload_requested }}" = "true" ]; then
+            if [ "$signing_ready" != "true" ]; then
+              echo "::error::Upload requested but signing secrets are missing: ${missing_signing[*]}"
+              exit 1
+            fi
+            if [ "$upload_ready" != "true" ]; then
+              echo "::error::Upload requested but Play secrets are missing: ${missing_upload[*]}"
+              exit 1
+            fi
           fi
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build release bundle (AAB)
+      - name: Prepare keystore for signed build
+        if: ${{ steps.secrets.outputs.signing_ready == 'true' }}
         shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+          test -s "$RUNNER_TEMP/upload-keystore.jks"
+
+      - name: Build release AAB (deterministic flags)
+        id: build
+        shell: bash
+        env:
+          ORG_GRADLE_PROJECT_ANDROID_SIGNING_STORE_FILE: ${{ runner.temp }}/upload-keystore.jks
+          ORG_GRADLE_PROJECT_ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          ./gradlew bundleRelease
-          AAB_PATH="$(find app/build/outputs -type f -name '*.aab' | head -n 1)"
+          ./gradlew --no-daemon --stacktrace --warning-mode all clean bundleRelease
+
+          AAB_PATH="$(find app/build/outputs/bundle -type f -name '*.aab' | sort | head -n 1)"
           if [ -z "${AAB_PATH}" ]; then
-            echo "::error::No .aab found under app/build/outputs"
+            echo "::error::No .aab found under app/build/outputs/bundle"
             exit 1
           fi
-          echo "AAB_PATH=${AAB_PATH}" >> "$GITHUB_ENV"
 
-      - name: Write service account credentials file
+          SHA256="$(sha256sum "$AAB_PATH" | awk '{print $1}')"
+          echo "aab_path=$AAB_PATH" >> "$GITHUB_OUTPUT"
+          echo "aab_sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Write Play service account credentials file
+        if: ${{ steps.secrets.outputs.upload_ready == 'true' }}
         shell: bash
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -102,25 +183,88 @@ jobs:
           set -euo pipefail
           printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play-service-account.json"
 
-      - name: Upload to Google Play Internal (optional)
-        if: ${{ github.event_name == 'push' || inputs.upload_enabled == 'true' }}
+      - name: Build release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          cat > build/release-metadata.txt <<EOF
+          workflow=android-play-internal
+          version=${{ steps.version.outputs.version }}
+          versionName=${{ steps.version.outputs.version_name }}
+          versionCode=${{ steps.version.outputs.version_code }}
+          ref=${GITHUB_REF}
+          sha=${GITHUB_SHA}
+          run_id=${GITHUB_RUN_ID}
+          run_number=${GITHUB_RUN_NUMBER}
+          aab_path=${{ steps.build.outputs.aab_path }}
+          aab_sha256=${{ steps.build.outputs.aab_sha256 }}
+          upload_requested=${{ steps.version.outputs.upload_requested }}
+          signing_ready=${{ steps.secrets.outputs.signing_ready }}
+          upload_ready=${{ steps.secrets.outputs.upload_ready }}
+          missing_signing=${{ steps.secrets.outputs.missing_signing }}
+          missing_upload=${{ steps.secrets.outputs.missing_upload }}
+          EOF
+
+          cat > build/release-metadata.json <<EOF
+          {
+            "workflow": "android-play-internal",
+            "version": "${{ steps.version.outputs.version }}",
+            "versionName": "${{ steps.version.outputs.version_name }}",
+            "versionCode": "${{ steps.version.outputs.version_code }}",
+            "ref": "${GITHUB_REF}",
+            "sha": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "aab_path": "${{ steps.build.outputs.aab_path }}",
+            "aab_sha256": "${{ steps.build.outputs.aab_sha256 }}",
+            "upload_requested": "${{ steps.version.outputs.upload_requested }}",
+            "signing_ready": "${{ steps.secrets.outputs.signing_ready }}",
+            "upload_ready": "${{ steps.secrets.outputs.upload_ready }}",
+            "missing_signing": "${{ steps.secrets.outputs.missing_signing }}",
+            "missing_upload": "${{ steps.secrets.outputs.missing_upload }}"
+          }
+          EOF
+
+      - name: Upload release bundle + metadata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: capture-android-play-internal-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.build.outputs.aab_path }}
+            build/release-metadata.txt
+            build/release-metadata.json
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+      - name: Upload to Google Play Internal
+        if: ${{ steps.version.outputs.upload_requested == 'true' && steps.secrets.outputs.upload_ready == 'true' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: ${{ env.RUNNER_TEMP }}/play-service-account.json
           packageName: ${{ secrets.PLAY_PACKAGE_NAME }}
-          releaseFiles: ${{ env.AAB_PATH }}
+          releaseFiles: ${{ steps.build.outputs.aab_path }}
           track: internal
           status: ${{ inputs.release_status || 'draft' }}
 
-      - name: Scaffold mode summary
-        if: ${{ github.event_name != 'push' && inputs.upload_enabled != 'true' }}
+      - name: Run summary
         shell: bash
         run: |
           set -euo pipefail
           {
-            echo "### Android Play Internal scaffold mode"
+            echo "### Android Play Internal CD"
             echo "- Version: ${{ steps.version.outputs.version }}"
-            echo "- AAB built: ${AAB_PATH}"
-            echo "- Upload step skipped (upload_enabled=false)."
-            echo "- Set upload_enabled=true to execute Play Internal upload."
+            echo "- versionName/versionCode: ${{ steps.version.outputs.version_name }} / ${{ steps.version.outputs.version_code }}"
+            echo "- AAB: ${{ steps.build.outputs.aab_path }}"
+            echo "- AAB sha256: ${{ steps.build.outputs.aab_sha256 }}"
+            echo "- Upload requested: ${{ steps.version.outputs.upload_requested }}"
+            echo "- Signing secrets ready: ${{ steps.secrets.outputs.signing_ready }}"
+            echo "- Upload secrets ready: ${{ steps.secrets.outputs.upload_ready }}"
+            if [ "${{ steps.version.outputs.upload_requested }}" != "true" ]; then
+              echo "- Upload skipped by gate (upload_enabled=false)."
+            fi
+            if [ "${{ steps.secrets.outputs.signing_ready }}" != "true" ] || [ "${{ steps.secrets.outputs.upload_ready }}" != "true" ]; then
+              echo "- Placeholder mode active: missing secrets captured in metadata artifact."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

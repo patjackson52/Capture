@@ -1,37 +1,39 @@
-# Release governance checklist (Android)
+# Release governance checklist (Android CD readiness)
 
-Use this checklist before promoting any candidate beyond internal testing.
+Use this checklist before enabling recurring Internal-track CD.
 
-## 1) Approval gates
+## CD readiness gates
 
-- [ ] Engineering owner approves release candidate commit/tag
-- [ ] QA sign-off completed on target devices and Android OS versions
-- [ ] Product/release manager approval captured (ticket/change record)
-- [ ] Security/privacy review completed for permission or data-path changes
-- [ ] Branch protection + required checks passing on merge commit
+- [ ] `Android CI / build-and-test` required check is enforced on `main`
+- [ ] `Android Play Internal CD / internal-release` runs clean in dry-run mode
+- [ ] Signing and Play secrets are stored in protected environment scope
+- [ ] Environment protection rules enabled (required reviewers)
+- [ ] Operator runbook reviewed with on-call/release owners
 
-## 2) Staged rollout plan
+## Approval gates per release
 
-- [ ] Start in Play **Internal** track only
-- [ ] Validate crash-free session baseline and critical funnels
-- [ ] Promote to next audience in controlled increments (for example 5% → 20% → 50% → 100%)
-- [ ] Monitor errors, ANR rate, performance regressions at each stage
-- [ ] Hold progression if thresholds breached
+- [ ] Engineering owner approves candidate commit/tag
+- [ ] QA sign-off complete for critical paths
+- [ ] Product/release owner approves scope + timing
+- [ ] Security/privacy review complete for sensitive changes
 
-## 3) Rollback triggers
+## Staged delivery plan
 
-Trigger rollback or halt if any occur:
+- [ ] Internal first (status `draft` for initial validation)
+- [ ] Promote only after acceptance criteria are met
+- [ ] Monitor crash/ANR/error budgets for at least one validation window
 
-- [ ] Crash/ANR rate exceeds defined SLO threshold
-- [ ] P0/P1 defect confirmed in core user journey
-- [ ] Security/privacy incident report received
-- [ ] Install/update failures spike above baseline
-- [ ] Backend/API incompatibility introduces widespread degradation
+## Rollback triggers
 
-## 4) Rollback actions
+- [ ] Crash/ANR breach vs baseline
+- [ ] P0/P1 defect in core flow
+- [ ] Security/privacy incident
+- [ ] Significant install/update failure spike
 
-- [ ] Halt further rollout immediately
-- [ ] Revert/replace affected release in Play Console track
-- [ ] Post incident update to release channel and stakeholders
-- [ ] Open corrective-action issue with owner and due date
-- [ ] Record root cause + prevention updates in runbook
+## Rollback response
+
+- [ ] Stop rollout/promotions immediately
+- [ ] Replace/deactivate bad release in Play Internal
+- [ ] Communicate status + owner + ETA
+- [ ] Open corrective action issue with deadline
+- [ ] Update runbook/checklist with lessons learned

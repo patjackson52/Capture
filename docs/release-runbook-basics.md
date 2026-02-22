@@ -1,43 +1,72 @@
-# Android release runbook (baseline)
+# Android Internal release + rollback runbook
 
-This is the minimum operator runbook for unsigned baseline releases.
+Use this runbook to execute and operate Internal track releases.
 
 ## Preconditions
 
-- `VERSION` file contains the intended release version (for example `0.1.0`)
-- For tag-triggered release, git tag must be `v<VERSION>` (for example `v0.1.0`)
-- Android signing material is handled separately (see `docs/signing-prerequisites-android.md`)
-- Play Internal distribution scaffold/runbook is documented in `docs/distribution-prep-android-play-internal.md`
-- Release approval/rollout/rollback controls are in `docs/release-governance-checklist.md`
+- All setup in `docs/distribution-prep-android-play-internal.md` is complete
+- Release PR merged with required checks green
+- `VERSION` and `versionName` aligned
+- Decision recorded for `release_status` (`draft` recommended for first rollout)
 
-## Triggering releases
+## Release procedure (Internal track)
 
-Two supported paths:
+1. **Prepare candidate**
+   - Confirm target commit on `main`
+   - Confirm `VERSION`/`versionCode` are correct
 
-- Manual: GitHub Actions → **Capture Release Baseline** → **Run workflow**
-- Tag push: push a tag matching `v*` (example: `v0.1.0`)
+2. **Create release tag**
+   - `git tag v<VERSION>`
+   - `git push origin v<VERSION>`
 
-## What the workflow validates
+3. **Monitor workflow**
+   - Workflow: **Android Play Internal CD**
+   - Verify summary shows expected version, checksum, and upload state
 
-- Fails fast if `VERSION` is empty
-- Fails fast if tag/version mismatch is detected
-- Runs unit tests (`testDebugUnitTest`)
-- Builds unsigned release artifacts (`assembleRelease`)
-- Verifies at least one APK/AAB exists
+4. **Verify in Play Console**
+   - Internal track contains new release
+   - Status matches selected `release_status`
+   - Release notes/changelog populated (if required by team process)
 
-## Artifacts and metadata
+5. **QA validation**
+   - Install from Play Internal
+   - Run smoke suite on target device matrix
+   - Confirm crash-free startup and critical user path
 
-Expected uploaded artifact name:
+## Manual release alternative
 
-- `capture-android-release-unsigned-<VERSION>`
+For controlled rehearsals, use `workflow_dispatch`:
+- `upload_enabled=false` for dry run
+- `upload_enabled=true` for actual upload
 
-Metadata files included in artifact:
+## Rollback / halt procedure
 
-- `build/release-metadata.txt`
-- `build/release-metadata.json`
+Trigger rollback on high crash rate, major regression, or security issue.
 
-Metadata captures version, ref, commit SHA, and workflow run identifiers.
+1. **Immediate containment**
+   - Halt promotions beyond Internal
+   - Mark incident in release channel
 
-## Retention
+2. **Play Console action** (choose one)
+   - Deactivate problematic internal release, or
+   - Replace with previous known-good AAB
 
-Release artifacts are retained for 30 days by default in baseline workflow.
+3. **Code-level remediation**
+   - Revert offending commit(s) on `main`
+   - Cut new patch release with incremented `versionCode`
+
+4. **Verification**
+   - Re-run CD workflow
+   - Confirm updated build in Internal track
+   - Re-run smoke tests
+
+5. **Post-incident**
+   - Capture timeline + root cause
+   - Add prevention action items to backlog and checklist docs
+
+## Evidence to retain per release
+
+- Workflow run URL + commit SHA
+- Generated metadata artifact (`release-metadata.*`)
+- QA sign-off record
+- Rollback decision log (if applicable)
