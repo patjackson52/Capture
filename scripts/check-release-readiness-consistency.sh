@@ -52,8 +52,17 @@ done
 for doc in \
   "docs/release-governance-checklist.md" \
   "docs/release-runbook-basics.md" \
-  "docs/release-verification-evidence-template.md"; do
+  "docs/release-verification-evidence-template.md" \
+  "docs/android-internal-release-run-now-checklist.md"; do
   check_contains "docs/android-first-internal-rollout-execution-pack.md" "$doc" "execution pack reference"
+done
+
+# Play CD workflow must continue to emit evidence-friendly metadata.
+for field in \
+  "run_url=" \
+  "build/evidence-prefill.md" \
+  "run_attempt="; do
+  check_contains ".github/workflows/android-play-internal.yml" "$field" "workflow evidence field"
 done
 
 if [[ "$failures" -gt 0 ]]; then
