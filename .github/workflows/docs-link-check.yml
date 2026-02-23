@@ -6,12 +6,14 @@ on:
       - 'docs/**'
       - '.github/workflows/**'
       - 'scripts/check-doc-links.sh'
+      - 'scripts/check-release-readiness-consistency.sh'
   push:
     branches: [ main, master ]
     paths:
       - 'docs/**'
       - '.github/workflows/**'
       - 'scripts/check-doc-links.sh'
+      - 'scripts/check-release-readiness-consistency.sh'
 
 permissions:
   contents: read
@@ -26,3 +28,6 @@ jobs:
 
       - name: Validate runbook/evidence doc links
         run: scripts/check-doc-links.sh
+
+      - name: Validate CD readiness consistency
+        run: scripts/check-release-readiness-consistency.sh
