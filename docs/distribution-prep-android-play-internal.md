@@ -76,6 +76,9 @@ The workflow exits early when:
 - `versionName != VERSION`
 - invalid `versionCode`
 - tag/version mismatch
+- invalid `release_status` (must be `draft|inProgress|completed`)
+- manual upload attempted from non-`main` ref
+- tag release `versionCode` is not strictly greater than previous tagged release
 - upload requested while signing or Play secrets are missing
 - AAB output missing
 
@@ -92,9 +95,11 @@ Metadata records commit/ref, run IDs, checksum, and whether secrets were present
 
 ## 8) First-time enablement checklist
 
+Use `docs/release-governance-checklist.md` as the canonical checklist to avoid drift.
+
+Minimum first rollout milestones:
 - [ ] Dry run succeeds with `upload_enabled=false`
 - [ ] Metadata confirms expected version + checksum
-- [ ] Signed build path validated with signing secrets present
 - [ ] First Internal upload executed with `release_status=draft`
 - [ ] QA installs from Play Internal and signs off
-- [ ] Rollback path rehearsed (see runbook)
+- [ ] Evidence record completed via `docs/release-verification-evidence-template.md`

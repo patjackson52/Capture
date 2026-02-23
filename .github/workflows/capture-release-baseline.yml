@@ -55,7 +55,15 @@ jobs:
           set -euo pipefail
           ARTIFACT_NAME="capture-android-release-unsigned-${{ steps.version.outputs.version }}"
           echo "artifact_name=${ARTIFACT_NAME}" >> "$GITHUB_OUTPUT"
-          echo "artifact_name=${ARTIFACT_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Capture Release Baseline"
+            echo "- artifact_name=${ARTIFACT_NAME}"
+            echo "- Required evidence fields to fill in docs/release-verification-evidence-template.md:"
+            echo "  - Release identity → Version (VERSION/versionName), versionCode, Target commit SHA"
+            echo "  - Dry-run evidence → Workflow URL, Result, Artifact name"
+            echo "  - Upload run evidence / Play Console verification (if applicable in rollout workflow)"
+            echo "- First rollout quickstart: docs/android-first-internal-rollout-execution-pack.md"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up Java
         uses: actions/setup-java@v4

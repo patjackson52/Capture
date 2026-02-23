@@ -76,13 +76,49 @@ jobs:
               exit 1
             fi
             upload_requested=true
+            release_status='${{ inputs.release_status || '"'"'draft'"'"' }}'
           else
             upload_requested='${{ inputs.upload_enabled || '"'"'false'"'"' }}'
+            release_status='${{ inputs.release_status || '"'"'draft'"'"' }}'
+
+            if [ "$upload_requested" = "true" ] && [ "${GITHUB_REF:-}" != "refs/heads/main" ]; then
+              echo "::error::Manual upload is only allowed from refs/heads/main (found: ${GITHUB_REF:-unknown})"
+              exit 1
+            fi
+          fi
+
+          case "$release_status" in
+            completed|inProgress|draft) ;;
+            *)
+              echo "::error::release_status must be one of: completed, inProgress, draft (found: $release_status)"
+              exit 1
+              ;;
+          esac
+
+          # Enforce strictly increasing versionCode for tag-triggered releases.
+          previous_tag="$(git tag -l 'v*' --sort=-version:refname | grep -Fv "${GITHUB_REF_NAME:-}" | head -n1 || true)"
+          previous_version_code=""
+          if [ -n "$previous_tag" ]; then
+            previous_version_code="$(git show "$previous_tag":app/build.gradle.kts 2>/dev/null | grep -E 'versionCode\s*=\s*[0-9]+' | head -n1 | sed -E 's/.*=\s*([0-9]+).*/\1/' || true)"
+          fi
+
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ] && [ -n "$previous_version_code" ]; then
+            if ! [[ "$previous_version_code" =~ ^[0-9]+$ ]]; then
+              echo "::error::Failed to parse previous tag ($previous_tag) versionCode"
+              exit 1
+            fi
+            if [ "$APP_VERSION_CODE" -le "$previous_version_code" ]; then
+              echo "::error::versionCode must increase over previous tag ($previous_tag): current=$APP_VERSION_CODE previous=$previous_version_code"
+              exit 1
+            fi
           fi
 
           echo "version=$VERSION_FILE" >> "$GITHUB_OUTPUT"
           echo "version_name=$APP_VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "version_code=$APP_VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=${previous_tag:-none}" >> "$GITHUB_OUTPUT"
+          echo "previous_version_code=${previous_version_code:-unknown}" >> "$GITHUB_OUTPUT"
+          echo "release_status=$release_status" >> "$GITHUB_OUTPUT"
           echo "upload_requested=$upload_requested" >> "$GITHUB_OUTPUT"
 
       - name: Check required secrets and decide mode
@@ -193,6 +229,9 @@ jobs:
           version=${{ steps.version.outputs.version }}
           versionName=${{ steps.version.outputs.version_name }}
           versionCode=${{ steps.version.outputs.version_code }}
+          previous_tag=${{ steps.version.outputs.previous_tag }}
+          previous_versionCode=${{ steps.version.outputs.previous_version_code }}
+          release_status=${{ steps.version.outputs.release_status }}
           ref=${GITHUB_REF}
           sha=${GITHUB_SHA}
           run_id=${GITHUB_RUN_ID}
@@ -212,6 +251,9 @@ jobs:
             "version": "${{ steps.version.outputs.version }}",
             "versionName": "${{ steps.version.outputs.version_name }}",
             "versionCode": "${{ steps.version.outputs.version_code }}",
+            "previous_tag": "${{ steps.version.outputs.previous_tag }}",
+            "previous_versionCode": "${{ steps.version.outputs.previous_version_code }}",
+            "release_status": "${{ steps.version.outputs.release_status }}",
             "ref": "${GITHUB_REF}",
             "sha": "${GITHUB_SHA}",
             "run_id": "${GITHUB_RUN_ID}",
@@ -246,7 +288,7 @@ jobs:
           packageName: ${{ secrets.PLAY_PACKAGE_NAME }}
           releaseFiles: ${{ steps.build.outputs.aab_path }}
           track: internal
-          status: ${{ inputs.release_status || 'draft' }}
+          status: ${{ steps.version.outputs.release_status }}
 
       - name: Run summary
         shell: bash
@@ -258,13 +300,25 @@ jobs:
             echo "- versionName/versionCode: ${{ steps.version.outputs.version_name }} / ${{ steps.version.outputs.version_code }}"
             echo "- AAB: ${{ steps.build.outputs.aab_path }}"
             echo "- AAB sha256: ${{ steps.build.outputs.aab_sha256 }}"
+            echo "- Previous tag/versionCode: ${{ steps.version.outputs.previous_tag }} / ${{ steps.version.outputs.previous_version_code }}"
+            echo "- Release status: ${{ steps.version.outputs.release_status }}"
             echo "- Upload requested: ${{ steps.version.outputs.upload_requested }}"
             echo "- Signing secrets ready: ${{ steps.secrets.outputs.signing_ready }}"
             echo "- Upload secrets ready: ${{ steps.secrets.outputs.upload_ready }}"
             if [ "${{ steps.version.outputs.upload_requested }}" != "true" ]; then
               echo "- Upload skipped by gate (upload_enabled=false)."
+              echo "- Next step: attach this run URL + metadata to docs/release-verification-evidence-template.md and then push tag v${{ steps.version.outputs.version }} when approved."
             fi
             if [ "${{ steps.secrets.outputs.signing_ready }}" != "true" ] || [ "${{ steps.secrets.outputs.upload_ready }}" != "true" ]; then
               echo "- Placeholder mode active: missing secrets captured in metadata artifact."
             fi
+            echo "- Operator docs: docs/android-first-internal-rollout-execution-pack.md"
+            echo "- Detailed runbook: docs/release-runbook-basics.md"
+            echo "- Evidence template: docs/release-verification-evidence-template.md"
+            echo "- Required evidence fields to update:"
+            echo "  - Release identity → Version (VERSION/versionName), versionCode, Previous tag, Previous versionCode, Target commit SHA"
+            echo "  - Dry-run evidence → Workflow URL (dispatch, upload_enabled=false), Result, aab_sha256 from metadata"
+            echo "  - Upload run evidence → Workflow URL (tag-triggered), release_status, Upload requested=true"
+            echo "  - Play Console verification → Internal release visible, Track status, Screenshot/link evidence"
+            echo "  - QA sign-off + Go/No-go + Rollback readiness"
           } >> "$GITHUB_STEP_SUMMARY"
