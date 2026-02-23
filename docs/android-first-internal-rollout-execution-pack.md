@@ -33,6 +33,12 @@ Use this as the operator script. It links to all required evidence and provides 
    test "${VERSION_FILE}" = "${VERSION_NAME}"
    ```
 
+   Optional helper:
+
+   ```bash
+   ./scripts/release-day-context.sh
+   ```
+
 3. **Run required dry run** (GitHub Actions UI)
    - Workflow: **Android Play Internal CD**
    - Branch: `main`
@@ -41,6 +47,8 @@ Use this as the operator script. It links to all required evidence and provides 
      - `release_status=draft`
 
 4. **Record dry-run evidence immediately** in `docs/release-verification-evidence-template.md`
+   - Fastest path: copy `build/evidence-handoff.md` from artifact `capture-android-play-internal-<version>`.
+   - Local fallback: run `./scripts/evidence-handoff-from-metadata.sh /path/to/release-metadata.txt`.
    - Required fields:
      - `Workflow URL (dispatch, upload_enabled=false)`
      - `Result`

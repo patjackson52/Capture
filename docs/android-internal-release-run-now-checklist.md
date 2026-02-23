@@ -27,6 +27,12 @@ echo "VERSION=${VERSION_FILE} versionName=${VERSION_NAME} versionCode=${VERSION_
 test "${VERSION_FILE}" = "${VERSION_NAME}"
 ```
 
+Optional helper (same output + previous tag context):
+
+```bash
+./scripts/release-day-context.sh
+```
+
 ## 1) Dry-run (required)
 
 - [ ] Trigger workflow **Android Play Internal CD** on `main`
@@ -34,6 +40,11 @@ test "${VERSION_FILE}" = "${VERSION_NAME}"
 - [ ] Run passes
 - [ ] Capture run URL + metadata artifact (`release-metadata.*`)
 - [ ] Record `aab_sha256`, `version`, `versionCode`, `previous_tag`, `previous_versionCode`, `run_url` in evidence record
+- [ ] Paste `build/evidence-handoff.md` (artifact) into release PR/issue, or generate from metadata locally:
+
+```bash
+./scripts/evidence-handoff-from-metadata.sh /path/to/release-metadata.txt
+```
 
 ## 2) Approval gate (explicit go/no-go to tag)
 

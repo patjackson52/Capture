@@ -304,6 +304,35 @@ jobs:
           - Missing secrets reported (should be \`none\`): signing=${{ steps.secrets.outputs.missing_signing }} upload=${{ steps.secrets.outputs.missing_upload }}
           EOF
 
+          cat > build/evidence-handoff.md <<EOF
+          # Evidence handoff payload (paste into release PR/issue)
+
+          ## Release identity
+          - Date/UTC: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          - Operator: ${GITHUB_ACTOR}
+          - Target commit SHA: ${GITHUB_SHA}
+          - Version (\`VERSION\`/\`versionName\`): ${{ steps.version.outputs.version }}
+          - \`versionCode\`: ${{ steps.version.outputs.version_code }}
+          - Previous tag: ${{ steps.version.outputs.previous_tag }}
+          - Previous \`versionCode\`: ${{ steps.version.outputs.previous_version_code }}
+          - Tag pushed: ${GITHUB_REF_NAME}
+
+          ## Dry-run evidence (required)
+          - Workflow URL (dispatch, \`upload_enabled=false\`): ${RUN_URL}
+          - Result: pass/fail
+          - Artifact name: capture-android-play-internal-${{ steps.version.outputs.version }}
+          - \`aab_sha256\` from metadata: ${{ steps.build.outputs.aab_sha256 }}
+          - \`run_attempt\`: ${GITHUB_RUN_ATTEMPT}
+          - Validation notes:
+
+          ## Upload run evidence
+          - Workflow URL (tag-triggered): ${RUN_URL}
+          - Result: pass/fail
+          - \`release_status\` used: ${{ steps.version.outputs.release_status }}
+          - Upload requested = true (yes/no): ${{ steps.version.outputs.upload_requested }}
+          - Missing secrets reported (should be \`none\`): signing=${{ steps.secrets.outputs.missing_signing }} upload=${{ steps.secrets.outputs.missing_upload }}
+          EOF
+
       - name: Upload release bundle + metadata artifact
         uses: actions/upload-artifact@v4
         with:
@@ -313,6 +342,7 @@ jobs:
             build/release-metadata.txt
             build/release-metadata.json
             build/evidence-prefill.md
+            build/evidence-handoff.md
           if-no-files-found: error
           retention-days: 30
           overwrite: true
@@ -333,31 +363,44 @@ jobs:
           set -euo pipefail
           {
             echo "### Android Play Internal CD"
-            echo "- Version: ${{ steps.version.outputs.version }}"
-            echo "- versionName/versionCode: ${{ steps.version.outputs.version_name }} / ${{ steps.version.outputs.version_code }}"
-            echo "- AAB: ${{ steps.build.outputs.aab_path }}"
-            echo "- AAB sha256: ${{ steps.build.outputs.aab_sha256 }}"
-            echo "- Previous tag/versionCode: ${{ steps.version.outputs.previous_tag }} / ${{ steps.version.outputs.previous_version_code }}"
-            echo "- Release status: ${{ steps.version.outputs.release_status }}"
-            echo "- Upload requested: ${{ steps.version.outputs.upload_requested }}"
-            echo "- Signing secrets ready: ${{ steps.secrets.outputs.signing_ready }}"
-            echo "- Upload secrets ready: ${{ steps.secrets.outputs.upload_ready }}"
+            echo ""
+            echo "| Signal | Value |"
+            echo "|---|---|"
+            echo "| Version | ${{ steps.version.outputs.version }} |"
+            echo "| versionName / versionCode | ${{ steps.version.outputs.version_name }} / ${{ steps.version.outputs.version_code }} |"
+            echo "| Previous tag / versionCode | ${{ steps.version.outputs.previous_tag }} / ${{ steps.version.outputs.previous_version_code }} |"
+            echo "| Upload requested | ${{ steps.version.outputs.upload_requested }} |"
+            echo "| Release status | ${{ steps.version.outputs.release_status }} |"
+            echo "| Signing secrets ready | ${{ steps.secrets.outputs.signing_ready }} |"
+            echo "| Upload secrets ready | ${{ steps.secrets.outputs.upload_ready }} |"
+            echo "| AAB sha256 | `${{ steps.build.outputs.aab_sha256 }}` |"
+            echo ""
+            echo "**Workflow summary**"
+            if [ "${{ steps.version.outputs.upload_requested }}" = "true" ]; then
+              echo "- ✅ Upload path requested."
+            else
+              echo "- ℹ️ Dry-run path only (`upload_enabled=false`)."
+            fi
+            if [ "${{ steps.secrets.outputs.signing_ready }}" = "true" ] && [ "${{ steps.secrets.outputs.upload_ready }}" = "true" ]; then
+              echo "- ✅ Required secrets available for live upload."
+            else
+              echo "- ⚠️ Placeholder mode active. Missing secrets are captured in metadata artifact."
+            fi
+            echo ""
+            echo "**Evidence handoff**"
+            echo "- Download artifact: `capture-android-play-internal-${{ steps.version.outputs.version }}`"
+            echo "- Paste-ready handoff file: `build/evidence-handoff.md`"
+            echo "- Metadata source of truth: `build/release-metadata.json`"
+            echo ""
+            echo "**Next operator action**"
             if [ "${{ steps.version.outputs.upload_requested }}" != "true" ]; then
-              echo "- Upload skipped by gate (upload_enabled=false)."
-              echo "- Next step: attach this run URL + metadata to docs/release-verification-evidence-template.md and then push tag v${{ steps.version.outputs.version }} when approved."
+              echo "1. Copy `build/evidence-handoff.md` into your release PR/issue evidence section."
+              echo "2. Complete approvals in docs/release-governance-checklist.md."
+              echo "3. Push tag `v${{ steps.version.outputs.version }}` when GO is confirmed."
+            else
+              echo "1. Confirm Play Internal shows versionCode `${{ steps.version.outputs.version_code }}`."
+              echo "2. Complete QA sign-off + GO/NO-GO + rollback readiness evidence."
             fi
-            if [ "${{ steps.secrets.outputs.signing_ready }}" != "true" ] || [ "${{ steps.secrets.outputs.upload_ready }}" != "true" ]; then
-              echo "- Placeholder mode active: missing secrets captured in metadata artifact."
-            fi
-            echo "- Operator docs: docs/android-first-internal-rollout-execution-pack.md"
-            echo "- Run-now checklist: docs/android-internal-release-run-now-checklist.md"
-            echo "- Detailed runbook: docs/release-runbook-basics.md"
-            echo "- Evidence template: docs/release-verification-evidence-template.md"
-            echo "- Artifact includes build/evidence-prefill.md for faster evidence capture."
-            echo "- Required evidence fields to update:"
-            echo "  - Release identity → Version (VERSION/versionName), versionCode, Previous tag, Previous versionCode, Target commit SHA"
-            echo "  - Dry-run evidence → Workflow URL (dispatch, upload_enabled=false), Result, aab_sha256 from metadata"
-            echo "  - Upload run evidence → Workflow URL (tag-triggered), release_status, Upload requested=true"
-            echo "  - Play Console verification → Internal release visible, Track status, Screenshot/link evidence"
-            echo "  - QA sign-off + Go/No-go + Rollback readiness"
+            echo ""
+            echo "Operator docs: docs/android-first-internal-rollout-execution-pack.md"
           } >> "$GITHUB_STEP_SUMMARY"
