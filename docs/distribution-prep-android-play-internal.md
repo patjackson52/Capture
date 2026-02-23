@@ -93,7 +93,18 @@ Every run uploads:
 
 Metadata records commit/ref, run IDs, checksum, and whether secrets were present.
 
-## 8) First-time enablement checklist
+## 8) Consistency checks (docs + workflow contract)
+
+`Docs Link Check / check-doc-links` now validates both file references and release-readiness contract consistency (required check names, workflow/job IDs, and evidence template sections).
+
+Local preflight commands:
+
+```bash
+scripts/check-doc-links.sh
+scripts/check-release-readiness-consistency.sh
+```
+
+## 9) First-time enablement checklist
 
 Use `docs/release-governance-checklist.md` as the canonical checklist to avoid drift.
 
