@@ -8,6 +8,8 @@ Use this runbook to execute and operate Internal track releases.
 - Release PR merged with required checks green
 - `VERSION` and `versionName` aligned
 - Decision recorded for `release_status` (`draft` recommended for first rollout)
+- `docs/release-governance-checklist.md` approval gates reviewed and satisfied
+- Evidence record opened from `docs/release-verification-evidence-template.md`
 
 ## Release procedure (Internal track)
 
@@ -87,4 +89,4 @@ Trigger rollback on high crash rate, major regression, or security issue.
 - QA sign-off record
 - Rollback decision log (if applicable)
 
-Use: `docs/release-verification-evidence-template.md` as the release record skeleton.
+Use `docs/release-verification-evidence-template.md` as the release record skeleton, and link it from the release PR/issue.

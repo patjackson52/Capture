@@ -307,8 +307,11 @@ jobs:
             echo "- Upload secrets ready: ${{ steps.secrets.outputs.upload_ready }}"
             if [ "${{ steps.version.outputs.upload_requested }}" != "true" ]; then
               echo "- Upload skipped by gate (upload_enabled=false)."
+              echo "- Next step: attach this run URL + metadata to docs/release-verification-evidence-template.md and then push tag v${{ steps.version.outputs.version }} when approved."
             fi
             if [ "${{ steps.secrets.outputs.signing_ready }}" != "true" ] || [ "${{ steps.secrets.outputs.upload_ready }}" != "true" ]; then
               echo "- Placeholder mode active: missing secrets captured in metadata artifact."
             fi
+            echo "- Operator docs: docs/release-runbook-basics.md"
+            echo "- Evidence template: docs/release-verification-evidence-template.md"
           } >> "$GITHUB_STEP_SUMMARY"

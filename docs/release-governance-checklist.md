@@ -17,6 +17,7 @@ Use this checklist before enabling recurring Internal-track CD.
 - [ ] Product/release owner approves scope + timing
 - [ ] Security/privacy review complete for sensitive changes
 - [ ] `docs/release-verification-evidence-template.md` completed and attached to PR/issue
+
 ## Staged delivery plan
 
 - [ ] Internal first (status `draft` for initial validation)
@@ -37,3 +38,7 @@ Use this checklist before enabling recurring Internal-track CD.
 - [ ] Communicate status + owner + ETA
 - [ ] Open corrective action issue with deadline
 - [ ] Update runbook/checklist with lessons learned
+
+Related docs:
+- Runbook: `docs/release-runbook-basics.md`
+- Evidence template: `docs/release-verification-evidence-template.md`
