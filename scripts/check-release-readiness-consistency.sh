@@ -64,8 +64,17 @@ done
 for field in \
   "run_url=" \
   "build/evidence-prefill.md" \
+  "build/evidence-handoff.md" \
   "run_attempt="; do
   check_contains ".github/workflows/android-play-internal.yml" "$field" "workflow evidence field"
+done
+
+# Helper scripts/docs should remain available for release-day execution.
+for helper in \
+  "./scripts/release-day-context.sh" \
+  "./scripts/evidence-handoff-from-metadata.sh"; do
+  check_contains "docs/android-first-internal-rollout-execution-pack.md" "$helper" "execution helper reference"
+  check_contains "docs/android-internal-release-run-now-checklist.md" "$helper" "run-now helper reference"
 done
 
 if [[ "$failures" -gt 0 ]]; then
