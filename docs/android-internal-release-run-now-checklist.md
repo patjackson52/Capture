@@ -4,6 +4,7 @@ Use this as the **live operator checklist** during execution.
 
 Related docs:
 - Execution pack: `docs/android-first-internal-rollout-execution-pack.md`
+- Rehearsal drill: `docs/android-internal-release-drill-pack.md`
 - Governance gates: `docs/release-governance-checklist.md`
 - Detailed runbook: `docs/release-runbook-basics.md`
 - Evidence template: `docs/release-verification-evidence-template.md`

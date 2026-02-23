@@ -24,6 +24,13 @@ Recommended additional gate for release-focused PRs:
 - Require branches to be up to date
 - Include administrators (recommended)
 
+## Operator documentation bundle (reference)
+
+- `docs/android-internal-release-drill-pack.md` (dry-run rehearsal, one-pass evidence prefill)
+- `docs/android-first-internal-rollout-execution-pack.md` (first rollout quickstart)
+- `docs/android-internal-release-run-now-checklist.md` (live execution checklist)
+- `docs/release-verification-evidence-template.md` (canonical evidence schema)
+
 ## Optional but recommended
 
 - Require conversation resolution before merge
