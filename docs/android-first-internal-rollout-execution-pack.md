@@ -11,6 +11,7 @@ Use this as the operator script. It links to all required evidence and provides 
 - Evidence record: `docs/release-verification-evidence-template.md`
 - Governance gates: `docs/release-governance-checklist.md`
 - Detailed runbook: `docs/release-runbook-basics.md`
+- Live operator checklist: `docs/android-internal-release-run-now-checklist.md`
 
 ## Quickstart (operator commands)
 
@@ -112,4 +113,4 @@ git tag v$(tr -d '[:space:]' < VERSION)
 git push origin main --follow-tags
 ```
 
-For full rollback policy and triggers, see `docs/release-runbook-basics.md` and `docs/release-governance-checklist.md`.
+For full rollback policy and triggers, see `docs/release-runbook-basics.md`, `docs/release-governance-checklist.md`, and `docs/android-internal-release-run-now-checklist.md`.

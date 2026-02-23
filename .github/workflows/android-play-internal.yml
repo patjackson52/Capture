@@ -224,6 +224,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
           cat > build/release-metadata.txt <<EOF
           workflow=android-play-internal
           version=${{ steps.version.outputs.version }}
@@ -233,9 +235,13 @@ jobs:
           previous_versionCode=${{ steps.version.outputs.previous_version_code }}
           release_status=${{ steps.version.outputs.release_status }}
           ref=${GITHUB_REF}
+          ref_name=${GITHUB_REF_NAME}
           sha=${GITHUB_SHA}
+          actor=${GITHUB_ACTOR}
           run_id=${GITHUB_RUN_ID}
           run_number=${GITHUB_RUN_NUMBER}
+          run_attempt=${GITHUB_RUN_ATTEMPT}
+          run_url=${RUN_URL}
           aab_path=${{ steps.build.outputs.aab_path }}
           aab_sha256=${{ steps.build.outputs.aab_sha256 }}
           upload_requested=${{ steps.version.outputs.upload_requested }}
@@ -255,9 +261,13 @@ jobs:
             "previous_versionCode": "${{ steps.version.outputs.previous_version_code }}",
             "release_status": "${{ steps.version.outputs.release_status }}",
             "ref": "${GITHUB_REF}",
+            "ref_name": "${GITHUB_REF_NAME}",
             "sha": "${GITHUB_SHA}",
+            "actor": "${GITHUB_ACTOR}",
             "run_id": "${GITHUB_RUN_ID}",
             "run_number": "${GITHUB_RUN_NUMBER}",
+            "run_attempt": "${GITHUB_RUN_ATTEMPT}",
+            "run_url": "${RUN_URL}",
             "aab_path": "${{ steps.build.outputs.aab_path }}",
             "aab_sha256": "${{ steps.build.outputs.aab_sha256 }}",
             "upload_requested": "${{ steps.version.outputs.upload_requested }}",
@@ -268,6 +278,32 @@ jobs:
           }
           EOF
 
+          cat > build/evidence-prefill.md <<EOF
+          ## Release identity
+          - Date/UTC: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          - Operator: ${GITHUB_ACTOR}
+          - Version (\`VERSION\`/\`versionName\`): ${{ steps.version.outputs.version }}
+          - \`versionCode\`: ${{ steps.version.outputs.version_code }}
+          - Previous tag: ${{ steps.version.outputs.previous_tag }}
+          - Previous \`versionCode\`: ${{ steps.version.outputs.previous_version_code }}
+          - Tag pushed: ${GITHUB_REF_NAME}
+          - Target commit SHA: ${GITHUB_SHA}
+
+          ## Dry-run evidence (required)
+          - Workflow URL (dispatch, \`upload_enabled=false\`): ${RUN_URL}
+          - Result: 
+          - Artifact name: capture-android-play-internal-${{ steps.version.outputs.version }}
+          - \`aab_sha256\` from metadata: ${{ steps.build.outputs.aab_sha256 }}
+          - Validation notes: 
+
+          ## Upload run evidence
+          - Workflow URL (tag-triggered): ${RUN_URL}
+          - Result: 
+          - \`release_status\` used: ${{ steps.version.outputs.release_status }}
+          - Upload requested = true (yes/no): ${{ steps.version.outputs.upload_requested }}
+          - Missing secrets reported (should be \`none\`): signing=${{ steps.secrets.outputs.missing_signing }} upload=${{ steps.secrets.outputs.missing_upload }}
+          EOF
+
       - name: Upload release bundle + metadata artifact
         uses: actions/upload-artifact@v4
         with:
@@ -276,6 +312,7 @@ jobs:
             ${{ steps.build.outputs.aab_path }}
             build/release-metadata.txt
             build/release-metadata.json
+            build/evidence-prefill.md
           if-no-files-found: error
           retention-days: 30
           overwrite: true
@@ -313,8 +350,10 @@ jobs:
               echo "- Placeholder mode active: missing secrets captured in metadata artifact."
             fi
             echo "- Operator docs: docs/android-first-internal-rollout-execution-pack.md"
+            echo "- Run-now checklist: docs/android-internal-release-run-now-checklist.md"
             echo "- Detailed runbook: docs/release-runbook-basics.md"
             echo "- Evidence template: docs/release-verification-evidence-template.md"
+            echo "- Artifact includes build/evidence-prefill.md for faster evidence capture."
             echo "- Required evidence fields to update:"
             echo "  - Release identity → Version (VERSION/versionName), versionCode, Previous tag, Previous versionCode, Target commit SHA"
             echo "  - Dry-run evidence → Workflow URL (dispatch, upload_enabled=false), Result, aab_sha256 from metadata"

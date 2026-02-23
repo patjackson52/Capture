@@ -20,6 +20,7 @@ required_docs=(
   "docs/release-runbook-basics.md"
   "docs/release-governance-checklist.md"
   "docs/release-verification-evidence-template.md"
+  "docs/android-internal-release-run-now-checklist.md"
   "docs/required-checks.md"
 )
 
@@ -33,6 +34,7 @@ sources=(
   "docs/release-runbook-basics.md"
   "docs/release-governance-checklist.md"
   "docs/required-checks.md"
+  "docs/android-internal-release-run-now-checklist.md"
   ".github/workflows/android-play-internal.yml"
   ".github/workflows/capture-release-baseline.yml"
   ".github/workflows/docs-link-check.yml"
