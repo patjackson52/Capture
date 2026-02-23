@@ -40,5 +40,6 @@ Use this checklist before enabling recurring Internal-track CD.
 - [ ] Update runbook/checklist with lessons learned
 
 Related docs:
+- First rollout execution pack: `docs/android-first-internal-rollout-execution-pack.md`
 - Runbook: `docs/release-runbook-basics.md`
 - Evidence template: `docs/release-verification-evidence-template.md`

@@ -312,6 +312,13 @@ jobs:
             if [ "${{ steps.secrets.outputs.signing_ready }}" != "true" ] || [ "${{ steps.secrets.outputs.upload_ready }}" != "true" ]; then
               echo "- Placeholder mode active: missing secrets captured in metadata artifact."
             fi
-            echo "- Operator docs: docs/release-runbook-basics.md"
+            echo "- Operator docs: docs/android-first-internal-rollout-execution-pack.md"
+            echo "- Detailed runbook: docs/release-runbook-basics.md"
             echo "- Evidence template: docs/release-verification-evidence-template.md"
+            echo "- Required evidence fields to update:"
+            echo "  - Release identity → Version (VERSION/versionName), versionCode, Previous tag, Previous versionCode, Target commit SHA"
+            echo "  - Dry-run evidence → Workflow URL (dispatch, upload_enabled=false), Result, aab_sha256 from metadata"
+            echo "  - Upload run evidence → Workflow URL (tag-triggered), release_status, Upload requested=true"
+            echo "  - Play Console verification → Internal release visible, Track status, Screenshot/link evidence"
+            echo "  - QA sign-off + Go/No-go + Rollback readiness"
           } >> "$GITHUB_STEP_SUMMARY"

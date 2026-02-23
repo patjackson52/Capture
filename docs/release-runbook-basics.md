@@ -2,6 +2,8 @@
 
 Use this runbook to execute and operate Internal track releases.
 
+For first rollout operators, start with `docs/android-first-internal-rollout-execution-pack.md` (single-source quickstart + evidence + rollback decision tree), then use this runbook for detailed procedures.
+
 ## Preconditions
 
 - All setup in `docs/distribution-prep-android-play-internal.md` is complete

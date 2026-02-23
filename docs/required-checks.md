@@ -7,6 +7,7 @@ Configure branch protection to enforce Android CD readiness.
 Use these check contexts (exact names from PR Checks UI):
 
 - `Android CI / build-and-test`
+- `Docs Link Check / check-doc-links` (guards runbook/evidence doc references)
 
 Recommended additional gate for release-focused PRs:
 
