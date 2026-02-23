@@ -5,19 +5,28 @@ Copy this into the release PR description or release issue.
 ## Release identity
 - Date/UTC:
 - Operator:
+- Candidate PR:
+- Target commit SHA:
 - Version (`VERSION`/`versionName`):
 - `versionCode`:
 - Previous tag:
 - Previous `versionCode`:
 - Tag pushed:
-- Target commit SHA:
 
 ## Dry-run evidence (required)
 - Workflow URL (dispatch, `upload_enabled=false`):
 - Result: pass/fail
 - Artifact name:
 - `aab_sha256` from metadata:
+- `run_attempt`:
 - Validation notes:
+
+## Rehearsal evidence (drill pack)
+- Drill doc used: `docs/android-internal-release-drill-pack.md`
+- Checklist completed in one pass (yes/no):
+- Preconditions validated (`VERSION` == `versionName`) (yes/no):
+- Missing owner/approval assignments:
+- Blockers found during rehearsal:
 
 ## Upload run evidence
 - Workflow URL (tag-triggered):
