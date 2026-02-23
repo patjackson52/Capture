@@ -26,6 +26,7 @@ Recommended additional gate for release-focused PRs:
 
 ## Operator documentation bundle (reference)
 
+- `docs/android-first-internal-rollout-final-execution-packet.md` (single-sheet checklist + commands + evidence refs)
 - `docs/android-internal-release-drill-pack.md` (dry-run rehearsal, one-pass evidence prefill)
 - `docs/android-first-internal-rollout-execution-pack.md` (first rollout quickstart)
 - `docs/android-internal-release-run-now-checklist.md` (live execution checklist)

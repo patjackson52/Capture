@@ -25,6 +25,7 @@ check_contains() {
 check_contains "docs/required-checks.md" "Android CI / build-and-test" "required check context"
 check_contains "docs/required-checks.md" "Docs Link Check / check-doc-links" "required check context"
 check_contains "docs/required-checks.md" "Android Play Internal CD / internal-release" "recommended release check context"
+check_contains "docs/required-checks.md" "docs/android-first-internal-rollout-final-execution-packet.md" "operator docs reference"
 check_contains "docs/required-checks.md" "docs/android-internal-release-drill-pack.md" "operator docs reference"
 
 # Verify workflow and job identifiers exist for the contexts above.
@@ -56,8 +57,19 @@ for doc in \
   "docs/release-runbook-basics.md" \
   "docs/release-verification-evidence-template.md" \
   "docs/android-internal-release-drill-pack.md" \
+  "docs/android-first-internal-rollout-final-execution-packet.md" \
   "docs/android-internal-release-run-now-checklist.md"; do
   check_contains "docs/android-first-internal-rollout-execution-pack.md" "$doc" "execution pack reference"
+done
+
+# Final execution packet must preserve single-sheet references + helper commands.
+for doc in \
+  "docs/release-verification-evidence-template.md" \
+  "docs/android-first-internal-rollout-execution-pack.md" \
+  "docs/android-internal-release-run-now-checklist.md" \
+  "docs/android-internal-release-drill-pack.md" \
+  "docs/release-governance-checklist.md"; do
+  check_contains "docs/android-first-internal-rollout-final-execution-packet.md" "$doc" "final packet reference"
 done
 
 # Play CD workflow must continue to emit evidence-friendly metadata.

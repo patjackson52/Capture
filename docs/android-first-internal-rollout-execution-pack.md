@@ -11,6 +11,7 @@ Use this as the operator script. It links to all required evidence and provides 
 - Evidence record: `docs/release-verification-evidence-template.md`
 - Governance gates: `docs/release-governance-checklist.md`
 - Detailed runbook: `docs/release-runbook-basics.md`
+- Final execution packet (single-sheet): `docs/android-first-internal-rollout-final-execution-packet.md`
 - Live operator checklist: `docs/android-internal-release-run-now-checklist.md`
 - Rehearsal drill pack: `docs/android-internal-release-drill-pack.md`
 
