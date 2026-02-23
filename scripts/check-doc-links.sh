@@ -20,6 +20,7 @@ required_docs=(
   "docs/release-runbook-basics.md"
   "docs/release-governance-checklist.md"
   "docs/release-verification-evidence-template.md"
+  "docs/required-checks.md"
 )
 
 for d in "${required_docs[@]}"; do
@@ -31,8 +32,10 @@ sources=(
   "docs/android-first-internal-rollout-execution-pack.md"
   "docs/release-runbook-basics.md"
   "docs/release-governance-checklist.md"
+  "docs/required-checks.md"
   ".github/workflows/android-play-internal.yml"
   ".github/workflows/capture-release-baseline.yml"
+  ".github/workflows/docs-link-check.yml"
 )
 
 for src in "${sources[@]}"; do

@@ -5,6 +5,7 @@ Use this checklist before enabling recurring Internal-track CD.
 ## CD readiness gates
 
 - [ ] `Android CI / build-and-test` required check is enforced on `main`
+- [ ] `Docs Link Check / check-doc-links` required check is enforced on `main`
 - [ ] `Android Play Internal CD / internal-release` runs clean in dry-run mode
 - [ ] Signing and Play secrets are stored in protected environment scope
 - [ ] Environment protection rules enabled (required reviewers)
@@ -40,6 +41,7 @@ Use this checklist before enabling recurring Internal-track CD.
 - [ ] Update runbook/checklist with lessons learned
 
 Related docs:
+- Required checks policy: `docs/required-checks.md`
 - First rollout execution pack: `docs/android-first-internal-rollout-execution-pack.md`
 - Runbook: `docs/release-runbook-basics.md`
 - Evidence template: `docs/release-verification-evidence-template.md`
