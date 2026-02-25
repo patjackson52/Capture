@@ -1,0 +1,55 @@
+{
+  "platform": "android-play-store",
+  "assets": [
+    {
+      "id": "app-icon-512",
+      "export": "assets/exports/play-store/icons/app-icon-512.png",
+      "placeholder": "assets/exports/play-store/icons/app-icon-512.placeholder.md",
+      "format": "png",
+      "width": 512,
+      "height": 512,
+      "required": true,
+      "notes": "Play Store app icon"
+    },
+    {
+      "id": "feature-graphic-1024x500",
+      "export": "assets/exports/play-store/graphics/feature-graphic-1024x500.png",
+      "placeholder": "assets/exports/play-store/graphics/feature-graphic-1024x500.placeholder.md",
+      "format": "png",
+      "width": 1024,
+      "height": 500,
+      "required": true,
+      "notes": "Play listing feature graphic"
+    },
+    {
+      "id": "phone-screenshot-01",
+      "export": "assets/exports/play-store/screenshots/phone/phone-01-1080x1920.png",
+      "placeholder": "assets/exports/play-store/screenshots/phone/phone-01-1080x1920.placeholder.md",
+      "format": "png",
+      "width": 1080,
+      "height": 1920,
+      "required": true,
+      "notes": "At least 2 phone screenshots required; add more as needed"
+    },
+    {
+      "id": "phone-screenshot-02",
+      "export": "assets/exports/play-store/screenshots/phone/phone-02-1080x1920.png",
+      "placeholder": "assets/exports/play-store/screenshots/phone/phone-02-1080x1920.placeholder.md",
+      "format": "png",
+      "width": 1080,
+      "height": 1920,
+      "required": true,
+      "notes": "At least 2 phone screenshots required; add more as needed"
+    },
+    {
+      "id": "tablet-7in-screenshot-01",
+      "export": "assets/exports/play-store/screenshots/tablet/tablet-7in-01-1200x1920.png",
+      "placeholder": "assets/exports/play-store/screenshots/tablet/tablet-7in-01-1200x1920.placeholder.md",
+      "format": "png",
+      "width": 1200,
+      "height": 1920,
+      "required": false,
+      "notes": "Recommended if tablet form factors are targeted"
+    }
+  ]
+}

@@ -7,6 +7,8 @@ on:
       - '.github/workflows/**'
       - 'scripts/check-doc-links.sh'
       - 'scripts/check-release-readiness-consistency.sh'
+      - 'scripts/check-assets-manifest.py'
+      - 'assets/**'
   push:
     branches: [ main, master ]
     paths:
@@ -14,6 +16,8 @@ on:
       - '.github/workflows/**'
       - 'scripts/check-doc-links.sh'
       - 'scripts/check-release-readiness-consistency.sh'
+      - 'scripts/check-assets-manifest.py'
+      - 'assets/**'
 
 permissions:
   contents: read
@@ -35,3 +39,6 @@ jobs:
 
       - name: Validate CD readiness consistency
         run: scripts/check-release-readiness-consistency.sh
+
+      - name: Validate assets manifest scaffolding
+        run: scripts/check-assets-manifest.py
