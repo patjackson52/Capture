@@ -7,6 +7,7 @@ This directory tracks **store assets readiness** without committing final artwor
 - `source/play-store/` — editable source files from design tools (SVG, Figma exports, layered files)
 - `exports/play-store/` — final deliverable exports used for submission
 - `manifest.json` — asset inventory + schema metadata (required/recommended, dimensions, locale, acceptance criteria)
+- `requirements/play-listing-required-asset-matrix.json` — required slot matrix (locale/device type/min/max) linked from the manifest
 
 ## Manifest schema highlights
 
@@ -16,11 +17,12 @@ Top-level fields:
 - `platform` — currently `android-play-store`
 - `defaultLocale` + `locales` — listing locale strategy
 - `acceptanceCriteria` — global quality gate for all assets
+- `requiredAssetMatrix.path` + `requiredAssetMatrix.version` — binds manifest entries to a machine-readable slot matrix file
 - `assets[]` — per-file requirements
 
 Per-asset required fields:
 
-- `id`, `export`, `placeholder`, `format`
+- `id`, `slotKey`, `export`, `placeholder`, `format`
 - `dimensions.width`, `dimensions.height`
 - `required`, `recommended`, `locale`
 - `acceptanceCriteria[]`

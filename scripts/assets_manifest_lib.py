@@ -26,6 +26,27 @@ def load_manifest(path: str = MANIFEST) -> dict[str, Any]:
     return data
 
 
+def _manifest_matrix_abs(manifest: dict[str, Any]) -> str | None:
+    matrix = manifest.get("requiredAssetMatrix")
+    if not isinstance(matrix, dict):
+        return None
+    path = matrix.get("path")
+    if not isinstance(path, str) or not path.strip():
+        return None
+    return os.path.join(ROOT, path)
+
+
+def load_required_asset_matrix(manifest: dict[str, Any]) -> dict[str, Any]:
+    matrix_abs = _manifest_matrix_abs(manifest)
+    if not matrix_abs:
+        raise ValueError("manifest.requiredAssetMatrix.path is missing")
+    with open(matrix_abs, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("required asset matrix root must be a JSON object")
+    return data
+
+
 def png_size(path: str) -> tuple[int, int]:
     with open(path, "rb") as f:
         sig = f.read(8)
@@ -91,6 +112,72 @@ def _require_type(
     return value
 
 
+def _validate_required_asset_matrix_schema(
+    manifest: dict[str, Any], errors: list[str]
+) -> tuple[set[str], set[str], dict[str, dict[str, Any]]]:
+    matrix_slot_keys: set[str] = set()
+    matrix_locales: set[str] = set()
+    slot_rules: dict[str, dict[str, Any]] = {}
+
+    matrix_ref = _require_type(errors, "manifest", manifest, "requiredAssetMatrix", dict)
+    if not isinstance(matrix_ref, dict):
+        return matrix_slot_keys, matrix_locales, slot_rules
+
+    matrix_path = _require_type(errors, "manifest.requiredAssetMatrix", matrix_ref, "path", str)
+    _require_type(errors, "manifest.requiredAssetMatrix", matrix_ref, "version", str)
+
+    if not isinstance(matrix_path, str):
+        return matrix_slot_keys, matrix_locales, slot_rules
+
+    matrix_abs = os.path.join(ROOT, matrix_path)
+    if not os.path.isfile(matrix_abs):
+        errors.append(f"manifest.requiredAssetMatrix.path does not exist: {matrix_path}")
+        return matrix_slot_keys, matrix_locales, slot_rules
+
+    try:
+        with open(matrix_abs, "r", encoding="utf-8") as f:
+            matrix = json.load(f)
+    except Exception as ex:  # noqa: BLE001
+        errors.append(f"manifest.requiredAssetMatrix.path failed to parse JSON ({matrix_path}): {ex}")
+        return matrix_slot_keys, matrix_locales, slot_rules
+
+    if not isinstance(matrix, dict):
+        errors.append(f"required asset matrix must be an object: {matrix_path}")
+        return matrix_slot_keys, matrix_locales, slot_rules
+
+    _require_type(errors, "requiredAssetMatrix", matrix, "schemaVersion", int)
+    _require_type(errors, "requiredAssetMatrix", matrix, "platform", str)
+
+    slots = _require_type(errors, "requiredAssetMatrix", matrix, "slots", list)
+    if not isinstance(slots, list):
+        return matrix_slot_keys, matrix_locales, slot_rules
+
+    for i, slot in enumerate(slots):
+        where = f"requiredAssetMatrix.slots[{i}]"
+        if not isinstance(slot, dict):
+            errors.append(f"{where}: entry must be an object")
+            continue
+
+        slot_key = _require_type(errors, where, slot, "slotKey", str)
+        _require_type(errors, where, slot, "displayName", str)
+        locale = _require_type(errors, where, slot, "locale", str)
+        _require_type(errors, where, slot, "deviceType", str)
+        min_count = _require_type(errors, where, slot, "minCount", int)
+        max_count = _require_type(errors, where, slot, "maxCount", int)
+
+        if isinstance(slot_key, str):
+            matrix_slot_keys.add(slot_key)
+            slot_rules[slot_key] = {
+                "minCount": min_count if isinstance(min_count, int) else None,
+                "maxCount": max_count if isinstance(max_count, int) else None,
+                "required": bool(slot.get("required", False)),
+            }
+        if isinstance(locale, str):
+            matrix_locales.add(locale)
+
+    return matrix_slot_keys, matrix_locales, slot_rules
+
+
 def validate_schema(manifest: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
@@ -110,9 +197,13 @@ def validate_schema(manifest: dict[str, Any]) -> list[str]:
             if not isinstance(entry, str) or not entry.strip():
                 errors.append(f"manifest.acceptanceCriteria[{i}] must be a non-empty string")
 
+    matrix_slot_keys, matrix_locales, slot_rules = _validate_required_asset_matrix_schema(manifest, errors)
+
     assets = _require_type(errors, "manifest", manifest, "assets", list)
     if not isinstance(assets, list):
         return errors
+
+    slot_counts: dict[str, int] = {}
 
     for i, item in enumerate(assets):
         where = f"assets[{i}]"
@@ -121,8 +212,15 @@ def validate_schema(manifest: dict[str, Any]) -> list[str]:
             continue
 
         _require_type(errors, where, item, "id", str)
+        _require_type(errors, where, item, "slotKey", str)
         _require_type(errors, where, item, "export", str)
         _require_type(errors, where, item, "placeholder", str)
+
+        slot_key = item.get("slotKey")
+        if isinstance(slot_key, str):
+            slot_counts[slot_key] = slot_counts.get(slot_key, 0) + 1
+            if matrix_slot_keys and slot_key not in matrix_slot_keys:
+                errors.append(f"{where}: slotKey '{slot_key}' is not present in requiredAssetMatrix.slots")
 
         fmt = _require_type(errors, where, item, "format", str)
         if isinstance(fmt, str) and fmt.lower() not in SUPPORTED_FORMATS:
@@ -146,11 +244,27 @@ def validate_schema(manifest: dict[str, Any]) -> list[str]:
             if isinstance(manifest_locales, list) and locale not in manifest_locales:
                 errors.append(f"{where}: locale '{locale}' must be one of manifest.locales or default/all")
 
+        if isinstance(locale, str) and matrix_locales and locale not in {"default", "all"} and locale not in matrix_locales:
+            errors.append(f"{where}: locale '{locale}' missing from requiredAssetMatrix.slots locales")
+
         criteria = _require_type(errors, where, item, "acceptanceCriteria", list)
         if isinstance(criteria, list):
             for j, entry in enumerate(criteria):
                 if not isinstance(entry, str) or not entry.strip():
                     errors.append(f"{where}.acceptanceCriteria[{j}] must be a non-empty string")
+
+    for slot_key, rules in slot_rules.items():
+        count = slot_counts.get(slot_key, 0)
+        min_count = rules.get("minCount")
+        max_count = rules.get("maxCount")
+        if isinstance(min_count, int) and count < min_count:
+            errors.append(
+                f"requiredAssetMatrix slot '{slot_key}' requires at least {min_count} manifest asset(s), found {count}"
+            )
+        if isinstance(max_count, int) and max_count >= 0 and count > max_count:
+            errors.append(
+                f"requiredAssetMatrix slot '{slot_key}' allows at most {max_count} manifest asset(s), found {count}"
+            )
 
     return errors
 
@@ -211,6 +325,7 @@ def validate_files_and_dimensions(manifest: dict[str, Any]) -> tuple[list[str], 
         rows.append(
             {
                 "id": asset_id,
+                "slotKey": item.get("slotKey"),
                 "required": required,
                 "recommended": bool(item.get("recommended", False)),
                 "export": export_rel,

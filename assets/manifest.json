@@ -29,7 +29,8 @@
         "Matches Play icon safe-area rules and avoids edge clipping.",
         "No alpha artifacts or compression ringing visible at 100% zoom."
       ],
-      "notes": "Play Store app icon"
+      "notes": "Play Store app icon",
+      "slotKey": "core.app-icon"
     },
     {
       "id": "feature-graphic-1024x500",
@@ -49,7 +50,8 @@
         "Text remains legible on small Play surfaces.",
         "No references to time-limited campaigns unless release-specific."
       ],
-      "notes": "Play listing feature graphic"
+      "notes": "Play listing feature graphic",
+      "slotKey": "core.feature-graphic"
     },
     {
       "id": "phone-screenshot-01",
@@ -69,7 +71,8 @@
         "Shows a distinct core workflow not duplicated in adjacent screenshots.",
         "System clock, battery, and notifications are sanitized for publishing."
       ],
-      "notes": "At least 2 phone screenshots required; add more as needed"
+      "notes": "At least 2 phone screenshots required; add more as needed",
+      "slotKey": "phone.screenshot"
     },
     {
       "id": "phone-screenshot-02",
@@ -89,7 +92,8 @@
         "Caption/callout copy (if overlaid) reflects shipping behavior.",
         "Layout and UI state are consistent with the release candidate build."
       ],
-      "notes": "At least 2 phone screenshots required; add more as needed"
+      "notes": "At least 2 phone screenshots required; add more as needed",
+      "slotKey": "phone.screenshot"
     },
     {
       "id": "tablet-7in-screenshot-01",
@@ -109,7 +113,12 @@
         "Only include if tablet UX is QA-verified and intentionally supported.",
         "Framing demonstrates tablet-specific value, not stretched phone UI."
       ],
-      "notes": "Recommended if tablet form factors are targeted"
+      "notes": "Recommended if tablet form factors are targeted",
+      "slotKey": "tablet7.screenshot"
     }
-  ]
+  ],
+  "requiredAssetMatrix": {
+    "path": "assets/requirements/play-listing-required-asset-matrix.json",
+    "version": "2026.02"
+  }
 }

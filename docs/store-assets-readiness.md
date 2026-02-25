@@ -11,18 +11,22 @@ This checklist tracks required Play listing art and screenshots before release.
 ## Repository scaffold
 
 - Manifest: `assets/manifest.json`
+- Required-asset matrix: `assets/requirements/play-listing-required-asset-matrix.json`
 - Schema details: `assets/README.md`
 - Source working files: `assets/source/play-store/`
 - Submission exports: `assets/exports/play-store/`
 - Validation script: `scripts/check-assets-manifest.py`
 - Preflight checklist report: `scripts/assets-preflight-report.py`
+- Handoff bundle generator: `scripts/generate-play-asset-handoff-bundle.py`
 - Screenshot automation + fallback plan: `docs/play-store-screenshot-generation-plan.md`
+- Asset production workflow: `docs/asset-production-workflow.md`
 
 ## Validate locally
 
 ```bash
 scripts/check-assets-manifest.py
 scripts/assets-preflight-report.py
+scripts/generate-play-asset-handoff-bundle.py --release <label> --zip
 ```
 
 Current CI behavior:
