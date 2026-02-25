@@ -6,13 +6,37 @@ This directory tracks **store assets readiness** without committing final artwor
 
 - `source/play-store/` — editable source files from design tools (SVG, Figma exports, layered files)
 - `exports/play-store/` — final deliverable exports used for submission
-- `manifest.json` — required asset inventory with expected dimensions/formats
+- `manifest.json` — asset inventory + schema metadata (required/recommended, dimensions, locale, acceptance criteria)
+
+## Manifest schema highlights
+
+Top-level fields:
+
+- `schemaVersion` — manifest schema revision
+- `platform` — currently `android-play-store`
+- `defaultLocale` + `locales` — listing locale strategy
+- `acceptanceCriteria` — global quality gate for all assets
+- `assets[]` — per-file requirements
+
+Per-asset required fields:
+
+- `id`, `export`, `placeholder`, `format`
+- `dimensions.width`, `dimensions.height`
+- `required`, `recommended`, `locale`
+- `acceptanceCriteria[]`
+
+Optional-but-useful fields:
+
+- `type`, `group`, `notes`
 
 ## Workflow
 
 1. Keep design source files under `source/play-store/`.
 2. Export submission-ready files to the paths in `manifest.json`.
-3. Run `scripts/check-assets-manifest.py` to validate placeholders and exported dimensions.
+3. Run `scripts/check-assets-manifest.py` to validate schema, placeholders, and dimensions.
+4. Run `scripts/assets-preflight-report.py` to generate checklist artifacts:
+   - `build/assets-preflight-report.md`
+   - `build/assets-preflight-report.json`
 
 ## Notes
 
