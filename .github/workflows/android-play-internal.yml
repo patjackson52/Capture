@@ -76,10 +76,10 @@ jobs:
               exit 1
             fi
             upload_requested=true
-            release_status='${{ inputs.release_status || '"'"'draft'"'"' }}'
+            release_status="${{ inputs.release_status || 'draft' }}"
           else
-            upload_requested='${{ inputs.upload_enabled || '"'"'false'"'"' }}'
-            release_status='${{ inputs.release_status || '"'"'draft'"'"' }}'
+            upload_requested="${{ inputs.upload_enabled || 'false' }}"
+            release_status="${{ inputs.release_status || 'draft' }}"
 
             if [ "$upload_requested" = "true" ] && [ "${GITHUB_REF:-}" != "refs/heads/main" ]; then
               echo "::error::Manual upload is only allowed from refs/heads/main (found: ${GITHUB_REF:-unknown})"
