@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "platform": "android-play-store",
   "defaultLocale": "en-US",
   "locales": [
@@ -119,6 +119,10 @@
   ],
   "requiredAssetMatrix": {
     "path": "assets/requirements/play-listing-required-asset-matrix.json",
+    "version": "2026.02"
+  },
+  "playListingMetadataTemplates": {
+    "path": "assets/source/play-store/listing-metadata.templates.json",
     "version": "2026.02"
   }
 }

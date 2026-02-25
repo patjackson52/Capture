@@ -178,6 +178,96 @@ def _validate_required_asset_matrix_schema(
     return matrix_slot_keys, matrix_locales, slot_rules
 
 
+def _validate_play_listing_metadata_templates_schema(
+    manifest: dict[str, Any],
+    matrix_slot_keys: set[str],
+    matrix_locales: set[str],
+    errors: list[str],
+) -> None:
+    templates_ref = manifest.get("playListingMetadataTemplates")
+    if templates_ref is None:
+        return
+    if not isinstance(templates_ref, dict):
+        errors.append("manifest.playListingMetadataTemplates must be an object when present")
+        return
+
+    templates_path = _require_type(errors, "manifest.playListingMetadataTemplates", templates_ref, "path", str)
+    _require_type(errors, "manifest.playListingMetadataTemplates", templates_ref, "version", str)
+    if not isinstance(templates_path, str):
+        return
+
+    templates_abs = os.path.join(ROOT, templates_path)
+    if not os.path.isfile(templates_abs):
+        errors.append(f"manifest.playListingMetadataTemplates.path does not exist: {templates_path}")
+        return
+
+    try:
+        with open(templates_abs, "r", encoding="utf-8") as f:
+            templates = json.load(f)
+    except Exception as ex:  # noqa: BLE001
+        errors.append(
+            f"manifest.playListingMetadataTemplates.path failed to parse JSON ({templates_path}): {ex}"
+        )
+        return
+
+    if not isinstance(templates, dict):
+        errors.append(f"play listing metadata templates must be an object: {templates_path}")
+        return
+
+    _require_type(errors, "playListingMetadataTemplates", templates, "schemaVersion", int)
+    locales_obj = _require_type(errors, "playListingMetadataTemplates", templates, "locales", dict)
+    if not isinstance(locales_obj, dict):
+        return
+
+    required_locales: set[str] = set()
+    manifest_locales = manifest.get("locales")
+    if isinstance(manifest_locales, list):
+        required_locales.update(locale for locale in manifest_locales if isinstance(locale, str) and locale.strip())
+    default_locale = manifest.get("defaultLocale")
+    if isinstance(default_locale, str) and default_locale.strip():
+        required_locales.add(default_locale)
+    required_locales.update(
+        locale
+        for locale in matrix_locales
+        if isinstance(locale, str) and locale not in {"all", "default"}
+    )
+
+    for locale in sorted(required_locales):
+        locale_entry = locales_obj.get(locale)
+        where = f"playListingMetadataTemplates.locales.{locale}"
+        if not isinstance(locale_entry, dict):
+            errors.append(f"{where}: missing locale template object")
+            continue
+
+        short_desc = _require_type(errors, where, locale_entry, "shortDescription", str)
+        full_desc = _require_type(errors, where, locale_entry, "fullDescription", str)
+        if isinstance(short_desc, str):
+            if not short_desc.strip():
+                errors.append(f"{where}.shortDescription must be non-empty")
+            if len(short_desc) > 80:
+                errors.append(f"{where}.shortDescription exceeds 80 characters")
+        if isinstance(full_desc, str):
+            if not full_desc.strip():
+                errors.append(f"{where}.fullDescription must be non-empty")
+            if len(full_desc) > 4000:
+                errors.append(f"{where}.fullDescription exceeds 4000 characters")
+
+        captions = _require_type(errors, where, locale_entry, "screenshotCaptions", dict)
+        if not isinstance(captions, dict):
+            continue
+
+        for slot_key, slot_value in captions.items():
+            if matrix_slot_keys and slot_key not in matrix_slot_keys:
+                errors.append(f"{where}.screenshotCaptions.{slot_key}: unknown slotKey (not in required matrix)")
+                continue
+            if not isinstance(slot_value, list):
+                errors.append(f"{where}.screenshotCaptions.{slot_key} must be a list")
+                continue
+            for i, caption in enumerate(slot_value):
+                if not isinstance(caption, str) or not caption.strip():
+                    errors.append(f"{where}.screenshotCaptions.{slot_key}[{i}] must be a non-empty string")
+
+
 def validate_schema(manifest: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
@@ -198,6 +288,7 @@ def validate_schema(manifest: dict[str, Any]) -> list[str]:
                 errors.append(f"manifest.acceptanceCriteria[{i}] must be a non-empty string")
 
     matrix_slot_keys, matrix_locales, slot_rules = _validate_required_asset_matrix_schema(manifest, errors)
+    _validate_play_listing_metadata_templates_schema(manifest, matrix_slot_keys, matrix_locales, errors)
 
     assets = _require_type(errors, "manifest", manifest, "assets", list)
     if not isinstance(assets, list):
@@ -244,7 +335,12 @@ def validate_schema(manifest: dict[str, Any]) -> list[str]:
             if isinstance(manifest_locales, list) and locale not in manifest_locales:
                 errors.append(f"{where}: locale '{locale}' must be one of manifest.locales or default/all")
 
-        if isinstance(locale, str) and matrix_locales and locale not in {"default", "all"} and locale not in matrix_locales:
+        if (
+            isinstance(locale, str)
+            and matrix_locales
+            and locale not in {"default", "all"}
+            and locale not in matrix_locales
+        ):
             errors.append(f"{where}: locale '{locale}' missing from requiredAssetMatrix.slots locales")
 
         criteria = _require_type(errors, where, item, "acceptanceCriteria", list)

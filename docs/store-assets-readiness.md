@@ -16,8 +16,10 @@ This checklist tracks required Play listing art and screenshots before release.
 - Source working files: `assets/source/play-store/`
 - Submission exports: `assets/exports/play-store/`
 - Validation script: `scripts/check-assets-manifest.py`
+- Localization completeness check: `scripts/check-play-localization-completeness.py`
 - Preflight checklist report: `scripts/assets-preflight-report.py`
 - Handoff bundle generator: `scripts/generate-play-asset-handoff-bundle.py`
+- RC checklist generator: `scripts/generate-release-candidate-assets-checklist.py`
 - Screenshot automation + fallback plan: `docs/play-store-screenshot-generation-plan.md`
 - Asset production workflow: `docs/asset-production-workflow.md`
 
@@ -25,7 +27,9 @@ This checklist tracks required Play listing art and screenshots before release.
 
 ```bash
 scripts/check-assets-manifest.py
+scripts/check-play-localization-completeness.py
 scripts/assets-preflight-report.py
+scripts/generate-release-candidate-assets-checklist.py --release <label>
 scripts/generate-play-asset-handoff-bundle.py --release <label> --zip
 ```
 

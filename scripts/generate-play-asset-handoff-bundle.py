@@ -45,6 +45,7 @@ def checklist_markdown(release_name: str, manifest: dict, bundle_rel: str) -> st
     lines.append("- [ ] Confirm release tag/version and locale scope")
     lines.append("- [ ] Replace placeholder files with final exports")
     lines.append("- [ ] Run `scripts/check-assets-manifest.py`")
+    lines.append("- [ ] Run `scripts/check-play-localization-completeness.py`")
     lines.append("- [ ] Run `scripts/assets-preflight-report.py`")
     lines.append("- [ ] Attach reviewer sign-off and legal/brand approval evidence")
     lines.append("")
@@ -109,6 +110,12 @@ def main() -> int:
         matrix_src = ROOT / matrix_ref
         if matrix_src.exists():
             write_file(bundle_dir / matrix_ref, matrix_src.read_text(encoding="utf-8"))
+
+    metadata_ref = (manifest.get("playListingMetadataTemplates") or {}).get("path")
+    if isinstance(metadata_ref, str) and metadata_ref.strip():
+        metadata_src = ROOT / metadata_ref
+        if metadata_src.exists():
+            write_file(bundle_dir / metadata_ref, metadata_src.read_text(encoding="utf-8"))
 
     write_file(
         bundle_dir / "CHECKLIST.md",

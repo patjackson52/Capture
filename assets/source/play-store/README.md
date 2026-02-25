@@ -7,5 +7,6 @@ Suggested structure:
 - `icons/`
 - `graphics/`
 - `screenshots/`
+- `listing-metadata.templates.json` (locale-ready Play listing copy scaffold)
 
 Do not commit confidential brand packs unless approved.
