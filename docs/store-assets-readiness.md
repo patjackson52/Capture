@@ -11,20 +11,28 @@ This checklist tracks required Play listing art and screenshots before release.
 ## Repository scaffold
 
 - Manifest: `assets/manifest.json`
+- Schema details: `assets/README.md`
 - Source working files: `assets/source/play-store/`
 - Submission exports: `assets/exports/play-store/`
 - Validation script: `scripts/check-assets-manifest.py`
+- Preflight checklist report: `scripts/assets-preflight-report.py`
+- Screenshot automation + fallback plan: `docs/play-store-screenshot-generation-plan.md`
 
 ## Validate locally
 
 ```bash
 scripts/check-assets-manifest.py
+scripts/assets-preflight-report.py
 ```
 
 Current CI behavior:
-- Fails when required placeholders are missing
-- Warns when final exports are not yet added
+- Fails when required schema fields/placeholders are missing
+- Warns when required final exports are not yet added
 - Verifies image dimensions when exports are present
+
+Preflight report outputs:
+- Markdown checklist for release operators: `build/assets-preflight-report.md`
+- JSON summary for automation/pipelines: `build/assets-preflight-report.json`
 
 ## Human/design-owned items
 
