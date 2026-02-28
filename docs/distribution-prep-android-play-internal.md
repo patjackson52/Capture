@@ -36,7 +36,7 @@ Required checks are listed in `docs/required-checks.md`.
 ### Play upload secrets (for Internal track upload)
 
 - `PLAY_SERVICE_ACCOUNT_JSON` - raw service account JSON
-- `PLAY_PACKAGE_NAME` - app id (example: `com.capture.app`)
+- `PLAY_PACKAGE_NAME` - app id (example: `dev.patrickjackson.capture`)
 
 Recommended: store these in a protected **Environment** (for example `production-release`) with reviewer approval.
 

@@ -1,4 +1,4 @@
-package com.capture.app.data
+package dev.patrickjackson.capture.data
 
 import android.content.Context
 import android.net.Uri
