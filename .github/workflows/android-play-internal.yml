@@ -32,6 +32,7 @@ jobs:
   internal-release:
     name: internal-release
     runs-on: ubuntu-latest
+    environment: play-internal
     timeout-minutes: 60
 
     steps:
