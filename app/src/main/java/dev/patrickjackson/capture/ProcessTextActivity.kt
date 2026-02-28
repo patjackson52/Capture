@@ -1,4 +1,4 @@
-package com.capture.app
+package dev.patrickjackson.capture
 
 import android.content.Intent
 import android.net.Uri
@@ -12,11 +12,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.capture.app.data.PreferencesManager
-import com.capture.app.model.CaptureSource
-import com.capture.app.ui.CaptureScreen
-import com.capture.app.ui.LogViewerScreen
-import com.capture.app.ui.theme.CaptureTheme
+import dev.patrickjackson.capture.data.PreferencesManager
+import dev.patrickjackson.capture.model.CaptureSource
+import dev.patrickjackson.capture.ui.CaptureScreen
+import dev.patrickjackson.capture.ui.LogViewerScreen
+import dev.patrickjackson.capture.ui.theme.CaptureTheme
 import kotlinx.coroutines.launch
 
 /**

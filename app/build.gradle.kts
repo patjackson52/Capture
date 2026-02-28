@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.capture.app"
+    namespace = "dev.patrickjackson.capture"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.capture.app"
+        applicationId = "dev.patrickjackson.capture"
         minSdk = 26
         targetSdk = 35
         versionCode = 2
