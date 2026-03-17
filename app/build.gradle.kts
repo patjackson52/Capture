@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.capture.app"
+    namespace = "dev.patrickjackson.capture"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.capture.app"
+        applicationId = "dev.patrickjackson.capture"
         minSdk = 26
         targetSdk = 35
         versionCode = 2
-        versionName = "1.1"
+        versionName = "0.1.0-alpha.1"
     }
 
     val ciStoreFile = providers.gradleProperty("ANDROID_SIGNING_STORE_FILE").orNull

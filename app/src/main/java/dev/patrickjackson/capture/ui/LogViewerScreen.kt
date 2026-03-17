@@ -1,4 +1,4 @@
-package com.capture.app.ui
+package dev.patrickjackson.capture.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -38,7 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.capture.app.data.AppLogger
+import dev.patrickjackson.capture.data.AppLogger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

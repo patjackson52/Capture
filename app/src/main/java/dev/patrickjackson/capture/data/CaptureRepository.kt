@@ -1,10 +1,10 @@
-package com.capture.app.data
+package dev.patrickjackson.capture.data
 
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
-import com.capture.app.model.Attachment
-import com.capture.app.model.CaptureData
+import dev.patrickjackson.capture.model.Attachment
+import dev.patrickjackson.capture.model.CaptureData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext

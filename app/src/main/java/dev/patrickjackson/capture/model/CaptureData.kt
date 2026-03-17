@@ -1,4 +1,4 @@
-package com.capture.app.model
+package dev.patrickjackson.capture.model
 
 import android.net.Uri
 

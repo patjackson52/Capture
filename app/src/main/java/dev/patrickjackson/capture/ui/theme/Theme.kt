@@ -1,4 +1,4 @@
-package com.capture.app.ui.theme
+package dev.patrickjackson.capture.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

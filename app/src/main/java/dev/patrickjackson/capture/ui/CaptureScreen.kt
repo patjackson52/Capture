@@ -1,4 +1,4 @@
-package com.capture.app.ui
+package dev.patrickjackson.capture.ui
 
 import android.net.Uri
 import android.widget.Toast
@@ -70,13 +70,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.capture.app.BuildConfig
-import com.capture.app.data.AppLogger
-import com.capture.app.data.CaptureRepository
-import com.capture.app.data.PreferencesManager
-import com.capture.app.model.Attachment
-import com.capture.app.model.CaptureData
-import com.capture.app.model.CaptureSource
+import dev.patrickjackson.capture.BuildConfig
+import dev.patrickjackson.capture.data.AppLogger
+import dev.patrickjackson.capture.data.CaptureRepository
+import dev.patrickjackson.capture.data.PreferencesManager
+import dev.patrickjackson.capture.model.Attachment
+import dev.patrickjackson.capture.model.CaptureData
+import dev.patrickjackson.capture.model.CaptureSource
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
