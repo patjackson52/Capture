@@ -16,6 +16,7 @@ check_exists() {
 
 # Enforce anchor docs for first rollout pack.
 required_docs=(
+  "docs/android-first-internal-rollout-final-execution-packet.md"
   "docs/android-first-internal-rollout-execution-pack.md"
   "docs/release-runbook-basics.md"
   "docs/release-governance-checklist.md"
@@ -32,6 +33,7 @@ done
 
 # Validate docs/*.md references found in key docs and workflows.
 sources=(
+  "docs/android-first-internal-rollout-final-execution-packet.md"
   "docs/android-first-internal-rollout-execution-pack.md"
   "docs/release-runbook-basics.md"
   "docs/release-governance-checklist.md"
