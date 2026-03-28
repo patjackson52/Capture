@@ -30,6 +30,7 @@ Recommended additional gate for release-focused PRs:
 - `docs/android-first-internal-rollout-execution-pack.md` (first rollout quickstart)
 - `docs/android-internal-release-run-now-checklist.md` (live execution checklist)
 - `docs/release-verification-evidence-template.md` (canonical evidence schema)
+- `docs/store-assets-readiness.md` (Play listing assets + icon checklist)
 
 ## Optional but recommended
 

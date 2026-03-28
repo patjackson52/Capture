@@ -22,6 +22,7 @@ required_docs=(
   "docs/release-verification-evidence-template.md"
   "docs/android-internal-release-run-now-checklist.md"
   "docs/android-internal-release-drill-pack.md"
+  "docs/store-assets-readiness.md"
   "docs/required-checks.md"
 )
 
@@ -37,6 +38,7 @@ sources=(
   "docs/required-checks.md"
   "docs/android-internal-release-run-now-checklist.md"
   "docs/android-internal-release-drill-pack.md"
+  "docs/store-assets-readiness.md"
   ".github/workflows/android-play-internal.yml"
   ".github/workflows/capture-release-baseline.yml"
   ".github/workflows/docs-link-check.yml"

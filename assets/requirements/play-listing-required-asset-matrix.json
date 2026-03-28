@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "platform": "android-play-store",
+  "notes": "Machine-readable Play listing slot matrix by locale/device type. Use with assets/manifest.json slotKey mapping.",
+  "slots": [
+    {
+      "slotKey": "core.app-icon",
+      "displayName": "App icon",
+      "locale": "all",
+      "deviceType": "listing-core",
+      "required": true,
+      "minCount": 1,
+      "maxCount": 1,
+      "format": "png",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      }
+    },
+    {
+      "slotKey": "core.feature-graphic",
+      "displayName": "Feature graphic",
+      "locale": "all",
+      "deviceType": "listing-core",
+      "required": true,
+      "minCount": 1,
+      "maxCount": 1,
+      "format": "png",
+      "dimensions": {
+        "width": 1024,
+        "height": 500
+      }
+    },
+    {
+      "slotKey": "phone.screenshot",
+      "displayName": "Phone screenshots",
+      "locale": "en-US",
+      "deviceType": "phone",
+      "required": true,
+      "minCount": 2,
+      "maxCount": 8,
+      "format": "png",
+      "dimensions": {
+        "width": 1080,
+        "height": 1920
+      }
+    },
+    {
+      "slotKey": "tablet7.screenshot",
+      "displayName": "7-inch tablet screenshots",
+      "locale": "en-US",
+      "deviceType": "tablet-7in",
+      "required": false,
+      "minCount": 0,
+      "maxCount": 8,
+      "format": "png",
+      "dimensions": {
+        "width": 1200,
+        "height": 1920
+      }
+    }
+  ]
+}

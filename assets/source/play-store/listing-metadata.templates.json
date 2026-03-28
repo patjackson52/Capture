@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "platform": "android-play-store",
+  "defaultLocale": "en-US",
+  "notes": "Locale-ready Play listing copy templates. Replace TODO placeholders before release candidate freeze.",
+  "characterLimits": {
+    "shortDescriptionMax": 80,
+    "fullDescriptionMax": 4000
+  },
+  "locales": {
+    "en-US": {
+      "shortDescription": "TODO(en-US): <=80 chars concise value proposition",
+      "fullDescription": "TODO(en-US): 1-3 paragraphs covering key workflows, privacy, and differentiation.",
+      "screenshotCaptions": {
+        "phone.screenshot": [
+          "TODO(en-US): Caption 1",
+          "TODO(en-US): Caption 2"
+        ],
+        "tablet7.screenshot": []
+      }
+    }
+  }
+}

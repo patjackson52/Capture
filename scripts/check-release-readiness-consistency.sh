@@ -26,6 +26,7 @@ check_contains "docs/required-checks.md" "Android CI / build-and-test" "required
 check_contains "docs/required-checks.md" "Docs Link Check / check-doc-links" "required check context"
 check_contains "docs/required-checks.md" "Android Play Internal CD / internal-release" "recommended release check context"
 check_contains "docs/required-checks.md" "docs/android-internal-release-drill-pack.md" "operator docs reference"
+check_contains "docs/required-checks.md" "Docs Link Check / check-doc-links" "docs guard reference"
 
 # Verify workflow and job identifiers exist for the contexts above.
 check_contains ".github/workflows/android-ci.yml" "name: Android CI" "workflow name"
@@ -76,6 +77,10 @@ for helper in \
   check_contains "docs/android-first-internal-rollout-execution-pack.md" "$helper" "execution helper reference"
   check_contains "docs/android-internal-release-run-now-checklist.md" "$helper" "run-now helper reference"
 done
+
+# Asset-readiness doc should continue to point to manifest and checker.
+check_contains "docs/store-assets-readiness.md" "assets/manifest.json" "asset manifest reference"
+check_contains "docs/store-assets-readiness.md" "scripts/check-assets-manifest.py" "asset checker reference"
 
 if [[ "$failures" -gt 0 ]]; then
   echo "Release readiness consistency check failed (${failures} issue(s))."
